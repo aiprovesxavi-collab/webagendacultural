@@ -135,7 +135,8 @@ const fmtData = iso => {
 async function carregaActes(){
   $("#estat-llista").textContent = "Carregant…";
 
-  let q = sb.from("actes").select("*").order("data_inici", {ascending:true}).limit(2000);
+  // join: municipi i, a través seu, la comarca
+  let q = sb.from("actes").select("*, municipis(nom, comarques(nom))").order("data_inici", {ascending:true}).limit(2000);
 
   // filtres
   const text = $("#f-text").value.trim();
@@ -147,8 +148,13 @@ async function carregaActes(){
   const passats = $("#f-passats").checked;
 
   if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%`);
-  if(municipi) q = q.eq("municipi", municipi);
-  if(comarca) q = q.eq("comarca", comarca);
+  if(municipi) q = q.eq("municipi_id", municipi);
+  if(comarca){
+    // comarca = id de la comarca; agafem els municipis d'aquesta comarca
+    const {data: mc} = await sb.from("municipis").select("id").eq("comarca_id", comarca);
+    const ids = (mc||[]).map(m=>m.id);
+    q = q.in("municipi_id", ids.length ? ids : [-1]);
+  }
   if(tipus) q = q.eq("tipus", tipus);
   if(desde) q = q.gte("data_inici", desde);
   if(fins) q = q.lte("data_inici", fins);
@@ -192,21 +198,41 @@ function capitalitza(text){
 // comparador que ordena bé en català (té en compte accents i ç)
 const ordreCatala = new Intl.Collator("ca", {sensitivity:"base"});
 
-// ---- omplir desplegables (una sola vegada, amb tots els valors) ----
+// el camp municipi ve com a ruta "Agenda:ubicacions/barcelona/anoia/igualada"
+// -> agafem l'última part i la capitalitzem: "Igualada"
+// el municipi ara ve del vincle amb la taula municipis (nom oficial net amb accents)
+function nomMunicipi(a){
+  return (a.municipis && a.municipis.nom) ? a.municipis.nom : "";
+}
+
+// ---- omplir desplegables ----
 async function carregaFiltres(){
-  const {data} = await sb.from("actes").select("municipi,comarca,tipus").limit(50000);
-  if(!data) return;
-  const muni = [...new Set(data.map(d=>d.municipi).filter(Boolean))].sort(ordreCatala.compare);
-  const com = [...new Set(data.map(d=>d.comarca).filter(Boolean))].sort(ordreCatala.compare);
-  const tip = [...new Set(data.map(d=>d.tipus).filter(Boolean))].sort(ordreCatala.compare);
-  ompleSelect("#f-municipi", muni);
-  ompleSelect("#f-comarca", com);
-  ompleSelect("#f-tipus", tip);
+  // comarques: de la taula comarques (value = id)
+  const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
+  if(coms){
+    const llista = coms.sort((a,b)=>ordreCatala.compare(a.nom,b.nom))
+                       .map(c=>({text:c.nom, value:String(c.id)}));
+    ompleSelect("#f-comarca", llista);
+  }
+  // municipis: de la taula municipis (value = id)
+  const {data: muns} = await sb.from("municipis").select("id,nom").order("nom");
+  if(muns){
+    const llista = muns.sort((a,b)=>ordreCatala.compare(a.nom,b.nom))
+                       .map(m=>({text:m.nom, value:String(m.id)}));
+    ompleSelect("#f-municipi", llista);
+  }
+  // tipus: dels actes
+  const {data} = await sb.from("actes").select("tipus").limit(50000);
+  if(data){
+    const tip = [...new Set(data.map(d=>d.tipus).filter(Boolean))].sort(ordreCatala.compare)
+                  .map(t=>({text:capitalitza(t), value:t}));
+    ompleSelect("#f-tipus", tip);
+  }
 }
 function ompleSelect(sel, vals){
   const el = $(sel);
-  // value = valor real (per filtrar) · text = versió bonica (capitalitzada)
-  vals.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=capitalitza(v);el.appendChild(o)});
+  // value = valor(s) real(s) per filtrar · text = versió bonica
+  vals.forEach(v=>{const o=document.createElement("option");o.value=v.value;o.textContent=v.text;el.appendChild(o)});
 }
 
 // ---- vista llista ----
@@ -222,7 +248,7 @@ function pintaLlista(){
       <div class="cos">
         <div class="data">${fmtData(a.data_inici)}</div>
         <h3>${a.nom||"Sense títol"}</h3>
-        <div class="lloc">📍 ${[a.lloc_nom,a.municipi].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
+        <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
         <div class="peu">${enllac}</div>
       </div>`;
     g.appendChild(t);
@@ -240,7 +266,7 @@ function pintaMapa(){
   capaMarcadors.clearLayers();
   actes.filter(a=>a.latitud&&a.longitud).forEach(a=>{
     L.marker([a.latitud,a.longitud]).addTo(capaMarcadors)
-     .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,a.municipi].filter(Boolean).join(", ")}`
+     .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`
         + (a.url_original?`<br><a href="${a.url_original}" target="_blank">Detalls →</a>`:""));
   });
 }
