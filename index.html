@@ -169,20 +169,44 @@ async function carregaActes(){
   pintaLlista(); pintaMapa(); pintaCalendari();
 }
 
+// paraules que en català van en minúscula dins d'un nom propi
+const MINUSCULES = new Set(["de","del","dels","la","les","el","els","l","d",
+  "i","a","amb","en","per","sa","ses","ca","can"]);
+// posa cada paraula en majúscula, excepte articles/preposicions (però la 1a sempre en majúscula)
+function capitalitza(text){
+  const trossos = text.toLowerCase().split(/(\s+|['’\-])/);  // conserva separadors
+  let primeraParaula = true;
+  return trossos.map(t=>{
+    if(/^(\s+|['’\-])$/.test(t) || t==="") return t;  // separador, no tocar
+    const minus = MINUSCULES.has(t);
+    let res;
+    if(primeraParaula || !minus){
+      res = t.charAt(0).toUpperCase() + t.slice(1);
+    }else{
+      res = t;
+    }
+    primeraParaula = false;
+    return res;
+  }).join("");
+}
+// comparador que ordena bé en català (té en compte accents i ç)
+const ordreCatala = new Intl.Collator("ca", {sensitivity:"base"});
+
 // ---- omplir desplegables (una sola vegada, amb tots els valors) ----
 async function carregaFiltres(){
   const {data} = await sb.from("actes").select("municipi,comarca,tipus").limit(50000);
   if(!data) return;
-  const muni = [...new Set(data.map(d=>d.municipi).filter(Boolean))].sort();
-  const com = [...new Set(data.map(d=>d.comarca).filter(Boolean))].sort();
-  const tip = [...new Set(data.map(d=>d.tipus).filter(Boolean))].sort();
+  const muni = [...new Set(data.map(d=>d.municipi).filter(Boolean))].sort(ordreCatala.compare);
+  const com = [...new Set(data.map(d=>d.comarca).filter(Boolean))].sort(ordreCatala.compare);
+  const tip = [...new Set(data.map(d=>d.tipus).filter(Boolean))].sort(ordreCatala.compare);
   ompleSelect("#f-municipi", muni);
   ompleSelect("#f-comarca", com);
   ompleSelect("#f-tipus", tip);
 }
 function ompleSelect(sel, vals){
   const el = $(sel);
-  vals.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;el.appendChild(o)});
+  // value = valor real (per filtrar) · text = versió bonica (capitalitzada)
+  vals.forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=capitalitza(v);el.appendChild(o)});
 }
 
 // ---- vista llista ----
