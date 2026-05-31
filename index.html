@@ -135,8 +135,8 @@ const fmtData = iso => {
 async function carregaActes(){
   $("#estat-llista").textContent = "Carregant…";
 
-  // join: municipi i, a través seu, la comarca
-  let q = sb.from("actes").select("*, municipis(nom, comarques(nom))").order("data_inici", {ascending:true}).limit(2000);
+  // join: municipi i comarca (directa i via municipi)
+  let q = sb.from("actes").select("*, municipis(nom, comarques(nom)), comarques(nom)").order("data_inici", {ascending:true}).limit(2000);
 
   // filtres
   const text = $("#f-text").value.trim();
@@ -149,12 +149,7 @@ async function carregaActes(){
 
   if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%`);
   if(municipi) q = q.eq("municipi_id", municipi);
-  if(comarca){
-    // comarca = id de la comarca; agafem els municipis d'aquesta comarca
-    const {data: mc} = await sb.from("municipis").select("id").eq("comarca_id", comarca);
-    const ids = (mc||[]).map(m=>m.id);
-    q = q.in("municipi_id", ids.length ? ids : [-1]);
-  }
+  if(comarca) q = q.eq("comarca_id", comarca);
   if(tipus) q = q.eq("tipus", tipus);
   if(desde) q = q.gte("data_inici", desde);
   if(fins) q = q.lte("data_inici", fins);
