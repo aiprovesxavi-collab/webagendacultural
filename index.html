@@ -254,9 +254,14 @@ let mapa, capaMarcadors;
 async function carregaActes(){
   $("#estat-llista").textContent="Carregant…";
 
-  let q = sb.from("actes")
-    .select("*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))")
-    .order("data_inici",{ascending:true}).limit(2000);
+  const cats = [...seleccionades];
+  // si hi ha categories seleccionades, fem el join INTERN cap a les subcategories
+  // (filtra dins la mateixa consulta, sense el límit de 1000 ids)
+  const sel = cats.length
+    ? "*, municipis(nom), acte_subcategories!inner(subcategories!inner(nom, categoria_id, categories(nom)))"
+    : "*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))";
+
+  let q = sb.from("actes").select(sel).order("data_inici",{ascending:true}).limit(2000);
 
   const text = $("#f-text").value.trim();
   const comarca = $("#f-comarca").value;
@@ -270,21 +275,18 @@ async function carregaActes(){
   if(desde) q = q.gte("data_inici", desde);
   if(fins) q = q.lte("data_inici", fins);
 
-  // filtre per categories seleccionades (una o més)
-  if(seleccionades.size){
-    const {data: subs} = await sb.from("subcategories").select("id,categoria_id").in("categoria_id",[...seleccionades]);
-    const subIds = (subs||[]).map(s=>s.id);
-    if(subIds.length){
-      const {data: rel} = await sb.from("acte_subcategories").select("acte_id").in("subcategoria_id",subIds);
-      const ids=[...new Set((rel||[]).map(r=>r.acte_id))];
-      q = q.in("id", ids.length?ids:[-1]);
-    } else { q = q.in("id",[-1]); }
+  // filtre per categories: sobre la taula relacionada, dins la mateixa consulta
+  if(cats.length){
+    q = q.in("acte_subcategories.subcategories.categoria_id", cats);
   }
 
   const {data, error} = await q;
   if(error){$("#estat-llista").textContent="Error carregant les dades: "+error.message;return}
 
-  const actes = data||[];
+  // amb !inner i diverses subcategories, un acte pot sortir repetit -> dedupliquem
+  const vistos = new Set();
+  const actes = (data||[]).filter(a=>{ if(vistos.has(a.id))return false; vistos.add(a.id); return true; });
+
   $("#compte").textContent = actes.length;
   $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
   pintaLlista(actes);
