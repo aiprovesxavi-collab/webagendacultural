@@ -6,109 +6,161 @@
 <title>Agenda Cultural de Catalunya</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
-  --tinta:#1a1410; --crema:#f7f1e6; --paper:#fffdf8;
-  --vermell:#d6452c; --vermell-fosc:#a83320; --groc:#e8a13a;
-  --verd:#3f6b4f; --blau:#2d4a6b; --ombra:rgba(26,20,16,.12); --vora:#e4dac6;
+  --tinta:#16130f; --gris:#6b6359; --paper:#ffffff; --fons:#fafafa;
+  --vora:#ececec; --ombra:rgba(0,0,0,.08);
+  /* colors intensos per categoria */
+  --c-esceniques:#e23b54;  /* vermell carmí */
+  --c-musicals:#f0820a;    /* taronja */
+  --c-plastiques:#1aa179;  /* verd maragda */
+  --c-popular:#d4264e;     /* magenta */
+  --c-literatura:#3257be;  /* blau */
+  --c-cinema:#7b3fe4;      /* violeta */
+  --c-formacio:#0f9bd1;    /* cian */
+  --c-altres:#5a6472;      /* grafit */
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Outfit',sans-serif;background:var(--crema);color:var(--tinta);-webkit-font-smoothing:antialiased}
-body::before{content:"";position:fixed;inset:0;z-index:-1;
-  background:radial-gradient(circle at 15% 20%, rgba(214,69,44,.06), transparent 40%),
-             radial-gradient(circle at 85% 70%, rgba(45,74,107,.06), transparent 45%)}
-header{padding:2.4rem 1.5rem 1.6rem;text-align:center}
-.kicker{font-size:.72rem;letter-spacing:.32em;text-transform:uppercase;color:var(--vermell);font-weight:600;margin-bottom:.5rem}
-h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.4rem,6vw,4.2rem);line-height:.95;letter-spacing:-.02em}
-h1 em{font-style:italic;color:var(--vermell)}
-.subtitol{margin-top:.7rem;color:#6b5d4a;font-size:1rem;font-weight:300;max-width:42ch;margin-inline:auto}
-.filtres{max-width:1180px;margin:1.5rem auto;padding:1.1rem 1.3rem;background:var(--paper);
-  border:1px solid var(--vora);border-radius:20px;box-shadow:0 8px 30px var(--ombra);
-  display:flex;flex-wrap:wrap;gap:.7rem;align-items:center}
-.cerca{flex:1 1 240px;display:flex;align-items:center;gap:.55rem;background:var(--crema);
-  border:1px solid var(--vora);border-radius:12px;padding:.6rem .9rem}
-.cerca input{border:0;background:transparent;outline:0;width:100%;font-family:inherit;font-size:.95rem;color:var(--tinta)}
-.filtres select,.filtres input[type=date]{font-family:inherit;font-size:.9rem;color:var(--tinta);
-  background:var(--crema);border:1px solid var(--vora);border-radius:12px;padding:.6rem .8rem;cursor:pointer;outline:0}
-.chk{display:flex;align-items:center;gap:.4rem;font-size:.9rem;background:var(--crema);
-  border:1px solid var(--vora);border-radius:12px;padding:.55rem .8rem;cursor:pointer;user-select:none}
-.chk input{cursor:pointer;accent-color:var(--vermell)}
-.tabs{max-width:1180px;margin:0 auto 1rem;padding:0 1.3rem;display:flex;gap:.4rem;flex-wrap:wrap}
-.tab{font-family:inherit;font-weight:600;font-size:.92rem;padding:.6rem 1.3rem;border-radius:999px;
-  cursor:pointer;border:1px solid var(--vora);background:var(--paper);color:#6b5d4a;transition:all .18s}
-.tab.actiu{background:var(--tinta);color:var(--crema);border-color:var(--tinta)}
-.compte{margin-left:auto;align-self:center;font-size:.85rem;color:#8a7a63}
-.compte b{color:var(--vermell);font-weight:700}
-main{max-width:1180px;margin:0 auto 4rem;padding:0 1.3rem}
-.vista{display:none}.vista.actiu{display:block}
-.graella{display:grid;gap:1.1rem;grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
-.targeta{background:var(--paper);border:1px solid var(--vora);border-radius:18px;overflow:hidden;
-  display:flex;flex-direction:column;box-shadow:0 4px 16px var(--ombra);transition:transform .2s, box-shadow .2s}
-.targeta:hover{transform:translateY(-4px);box-shadow:0 14px 34px var(--ombra)}
-.targeta .foto{height:148px;background:linear-gradient(135deg,var(--blau),var(--verd));background-size:cover;background-position:center;position:relative}
-.targeta .foto .tipus{position:absolute;left:.7rem;bottom:.7rem;background:rgba(255,253,248,.92);color:var(--tinta);
-  font-size:.7rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:.28rem .6rem;border-radius:999px}
-.targeta .cos{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.45rem;flex:1}
-.targeta .data{font-size:.78rem;font-weight:600;color:var(--vermell);letter-spacing:.02em}
-.targeta h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.18rem;line-height:1.15}
-.targeta .lloc{font-size:.85rem;color:#6b5d4a;display:flex;align-items:center;gap:.35rem}
-.targeta .peu{margin-top:auto;display:flex;justify-content:flex-end;align-items:center;padding-top:.6rem}
-.targeta a.enllac{font-size:.82rem;font-weight:600;color:var(--vermell);text-decoration:none}
-.targeta a.enllac:hover{text-decoration:underline}
-#mapa{height:68vh;border-radius:18px;border:1px solid var(--vora);box-shadow:0 6px 24px var(--ombra)}
-.cal-cap{display:flex;align-items:center;justify-content:center;gap:1.4rem;margin-bottom:1rem}
-.cal-cap button{font-family:inherit;font-size:1.2rem;cursor:pointer;border:1px solid var(--vora);background:var(--paper);width:2.4rem;height:2.4rem;border-radius:50%}
-.cal-cap h2{font-family:'Fraunces',serif;font-weight:600;font-size:1.5rem;min-width:11rem;text-align:center;text-transform:capitalize}
-.calendari{display:grid;grid-template-columns:repeat(7,1fr);gap:.4rem}
-.dia-nom{text-align:center;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#8a7a63;padding:.4rem 0}
-.dia{min-height:92px;background:var(--paper);border:1px solid var(--vora);border-radius:12px;padding:.4rem;font-size:.78rem;overflow:hidden}
-.dia.buit{background:transparent;border:0}
-.dia .num{font-weight:600;color:#8a7a63;margin-bottom:.2rem}
-.dia.avui .num{color:var(--vermell)}
-.ev{background:var(--vermell);color:#fff;font-size:.68rem;border-radius:6px;padding:.12rem .35rem;margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
-.ev.mes{background:transparent;color:#8a7a63;font-weight:600}
-.estat{text-align:center;padding:3rem 1rem;color:#8a7a63;font-size:1rem}
-@media(max-width:600px){.filtres{border-radius:14px}}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--tinta);-webkit-font-smoothing:antialiased;line-height:1.5}
+
+/* ---------- capçalera ---------- */
+.capcalera{padding:3.2rem 1.5rem 1.5rem;text-align:center;max-width:1200px;margin:0 auto}
+.capcalera h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.02em;line-height:1.02}
+.capcalera h1 em{font-style:italic;font-weight:500}
+.capcalera p{color:var(--gris);font-size:1.05rem;margin-top:.6rem;font-weight:300}
+
+/* ---------- estructura d'apartats ---------- */
+.bloc{max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem}
+.bloc-titol{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.1rem}
+.bloc-titol .n{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.1rem;color:var(--gris)}
+.bloc-titol h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.9rem;letter-spacing:-.01em}
+.bloc-titol .ajuda{margin-left:auto;font-size:.85rem;color:var(--gris);font-weight:300}
+
+/* ---------- QUÈ: quadres de categoria ---------- */
+.categories{display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem}
+@media(max-width:880px){.categories{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.categories{grid-template-columns:1fr}}
+.cat{position:relative;height:96px;border-radius:16px;overflow:hidden;cursor:pointer;border:none;
+  display:flex;align-items:flex-end;padding:.85rem 1rem;text-align:left;
+  background-size:cover;background-position:center;transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;
+  box-shadow:0 2px 8px var(--ombra)}
+.cat::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),var(--tint,#000) 220%);opacity:.78;transition:opacity .25s}
+.cat:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.16)}
+.cat:hover::after{opacity:.62}
+.cat span{position:relative;z-index:2;color:#fff;font-weight:700;font-size:1.08rem;letter-spacing:.01em;
+  text-shadow:0 1px 6px rgba(0,0,0,.4)}
+.cat .check{position:absolute;top:.6rem;right:.6rem;z-index:3;width:24px;height:24px;border-radius:50%;
+  background:#fff;color:var(--tint,#000);display:none;align-items:center;justify-content:center;font-weight:800;font-size:.9rem}
+.cat.actiu{transform:translateY(-3px)}
+.cat.actiu::after{opacity:.30}
+.cat.actiu{box-shadow:0 0 0 3px #fff, 0 0 0 6px var(--tint,#000), 0 8px 22px rgba(0,0,0,.2)}
+.cat.actiu .check{display:flex}
+
+/* ---------- QUAN: dates ---------- */
+.dates{display:flex;gap:1.4rem;flex-wrap:wrap}
+.camp-data{display:flex;flex-direction:column;gap:.35rem}
+.camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.camp-data input{font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1.5px solid var(--vora);
+  border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
+.camp-data input:focus{outline:none;border-color:var(--c-literatura)}
+
+/* ---------- ON: lloc ---------- */
+.lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}
+.lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
+  border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
+.lloc-controls select:focus{outline:none;border-color:var(--c-plastiques)}
+.toggle-mapa{display:flex;gap:.3rem;background:var(--fons);border-radius:11px;padding:.3rem}
+.toggle-mapa button{border:none;background:none;padding:.5rem .95rem;border-radius:8px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--gris);transition:all .2s}
+.toggle-mapa button.actiu{background:var(--tinta);color:#fff}
+
+/* ---------- cerca de text ---------- */
+.cerca{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.cerca input{width:100%;font-family:'Outfit',sans-serif;font-size:1.05rem;padding:.85rem 1.1rem;
+  border:1.5px solid var(--vora);border-radius:13px;background:var(--paper)}
+.cerca input:focus{outline:none;border-color:var(--c-musicals)}
+
+/* ---------- resultats ---------- */
+.barra-res{max-width:1200px;margin:1.2rem auto .4rem;padding:0 1.5rem;display:flex;align-items:baseline;gap:.6rem}
+.barra-res .compte{font-family:'Fraunces',serif;font-weight:900;font-size:1.5rem}
+.barra-res .et{color:var(--gris);font-weight:300}
+.barra-res .netejar{margin-left:auto;background:none;border:none;color:var(--c-esceniques);font-weight:600;
+  cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem}
+
+.vista{display:none;max-width:1200px;margin:0 auto;padding:1rem 1.5rem 4rem}
+.vista.actiu{display:block}
+
+.graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.3rem}
+.targeta{background:var(--paper);border:1px solid var(--vora);border-radius:16px;overflow:hidden;
+  transition:transform .22s,box-shadow .22s;cursor:pointer;display:flex;flex-direction:column}
+.targeta:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.12)}
+.targeta .foto{height:150px;background:var(--fons);background-size:cover;background-position:center;position:relative}
+.targeta .etiq{position:absolute;left:.6rem;bottom:.6rem;color:#fff;font-weight:700;font-size:.78rem;
+  padding:.25rem .6rem;border-radius:20px;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.targeta .cos{padding:.9rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
+.targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
+.targeta h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.12rem;line-height:1.2}
+.targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
+#mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
+.estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
+.peu{text-align:center;color:var(--gris);font-size:.82rem;padding:2rem 1.5rem 3rem;font-weight:300}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="kicker">Agenda Cultural</div>
-  <h1>Què passa a <em>Catalunya</em></h1>
-  <p class="subtitol">Concerts, exposicions, teatre i festes d'arreu del territori, recollits de fonts públiques.</p>
+<header class="capcalera">
+  <h1>Agenda Cultural <em>de Catalunya</em></h1>
+  <p>Descobreix què passa, quan i on</p>
 </header>
 
-<section class="filtres">
-  <label class="cerca">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    <input id="f-text" type="text" placeholder="Cerca un acte, artista, tema…">
-  </label>
-  <select id="f-municipi"><option value="">Tots els municipis</option></select>
-  <select id="f-comarca"><option value="">Totes les comarques</option></select>
-  <select id="f-tipus"><option value="">Tots els tipus</option></select>
-  <input id="f-desde" type="date" title="Des de">
-  <input id="f-fins" type="date" title="Fins a">
-  <label class="chk"><input type="checkbox" id="f-passats"> Incloure passats</label>
-</section>
-
-<div class="tabs">
-  <button class="tab actiu" data-vista="llista">Llista</button>
-  <button class="tab" data-vista="mapa">Mapa</button>
-  <button class="tab" data-vista="calendari">Calendari</button>
-  <span class="compte"><b id="compte">0</b> actes</span>
+<div class="cerca">
+  <input id="f-text" type="text" placeholder="Cerca un acte, un artista, un tema…">
 </div>
 
-<main>
-  <section id="v-llista" class="vista actiu"><div class="graella" id="graella"></div><div class="estat" id="estat-llista">Carregant…</div></section>
-  <section id="v-mapa" class="vista"><div id="mapa"></div></section>
-  <section id="v-calendari" class="vista">
-    <div class="cal-cap"><button id="cal-prev">‹</button><h2 id="cal-titol"></h2><button id="cal-next">›</button></div>
-    <div class="calendari" id="calendari"></div>
-  </section>
-</main>
+<!-- QUÈ -->
+<section class="bloc">
+  <div class="bloc-titol"><span class="n">01</span><h2>Què</h2><span class="ajuda">Tria una o més categories</span></div>
+  <div class="categories" id="categories"></div>
+</section>
+
+<!-- QUAN -->
+<section class="bloc">
+  <div class="bloc-titol"><span class="n">02</span><h2>Quan</h2><span class="ajuda">Del primer al darrer dia</span></div>
+  <div class="dates">
+    <div class="camp-data"><label>Des del dia</label><input id="f-desde" type="date"></div>
+    <div class="camp-data"><label>Fins al dia</label><input id="f-fins" type="date"></div>
+  </div>
+</section>
+
+<!-- ON -->
+<section class="bloc">
+  <div class="bloc-titol"><span class="n">03</span><h2>On</h2>
+    <div class="toggle-mapa" style="margin-left:auto">
+      <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
+      <button id="t-mapa" data-vista="mapa">Mapa</button>
+    </div>
+  </div>
+  <div class="lloc-controls">
+    <select id="f-comarca"><option value="">Totes les comarques</option></select>
+    <select id="f-municipi"><option value="">Tots els municipis</option></select>
+  </div>
+</section>
+
+<div class="barra-res">
+  <span class="compte" id="compte">…</span><span class="et" id="et-res">actes trobats</span>
+  <button class="netejar" id="netejar">Esborrar filtres</button>
+</div>
+
+<div class="vista actiu" id="v-llista">
+  <div class="graella" id="graella"></div>
+  <div class="estat" id="estat-llista"></div>
+</div>
+<div class="vista" id="v-mapa"><div id="mapa"></div></div>
+
+<footer class="peu">Dades obertes de la Generalitat de Catalunya · Agenda Cultural</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -118,200 +170,195 @@ const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let actes = [];
-let mapa, capaMarcadors;
-let mesCal = new Date();
-
 const $ = s => document.querySelector(s);
-const fmtData = iso => {
-  if(!iso) return "Data per confirmar";
-  const d = new Date(iso);
-  if(isNaN(d)) return "Data per confirmar";
-  return d.toLocaleDateString("ca-ES",{weekday:"short",day:"numeric",month:"short"})
-       + " · " + d.toLocaleTimeString("ca-ES",{hour:"2-digit",minute:"2-digit"});
-};
+const ordreCatala = new Intl.Collator('ca');
 
-// ---- carregar actes des de Supabase ----
+// ---- definició visual de les 8 categories ----
+// (nom EXACTE com a la BD) -> color + cerca d'imatge
+const CATS = [
+  {nom:"Arts escèniques", color:"var(--c-esceniques)", img:"theatre,stage"},
+  {nom:"Arts musicals",   color:"var(--c-musicals)",   img:"concert,music"},
+  {nom:"Arts plàstiques", color:"var(--c-plastiques)", img:"art,gallery,painting"},
+  {nom:"Cultura popular", color:"var(--c-popular)",    img:"festival,tradition"},
+  {nom:"Literatura",      color:"var(--c-literatura)", img:"books,library"},
+  {nom:"Cinema",          color:"var(--c-cinema)",     img:"cinema,film"},
+  {nom:"Formació",        color:"var(--c-formacio)",   img:"workshop,learning"},
+  {nom:"Altres",          color:"var(--c-altres)",     img:"culture,event"},
+];
+const colorCat = {};        // nom -> color
+const idCat = {};           // nom -> id (de la BD)
+const seleccionades = new Set();   // ids de categories premudes
+
+// ---- pintar els quadres de categoria ----
+async function pintaCategories(){
+  // agafar els ids reals de la BD
+  const {data} = await sb.from("categories").select("id,nom");
+  (data||[]).forEach(c=>idCat[c.nom]=c.id);
+
+  const cont = $("#categories");
+  cont.innerHTML = "";
+  CATS.forEach(c=>{
+    colorCat[c.nom]=c.color;
+    const id = idCat[c.nom];
+    const url = `https://source.unsplash.com/400x200/?${encodeURIComponent(c.img)}`;
+    const b = document.createElement("button");
+    b.className="cat";
+    b.style.setProperty("--tint", c.color);
+    b.style.backgroundImage = `url('${url}')`;
+    b.innerHTML = `<span>${c.nom}</span><span class="check">✓</span>`;
+    b.onclick = ()=>{
+      if(!id) return;
+      if(seleccionades.has(id)){seleccionades.delete(id);b.classList.remove("actiu")}
+      else{seleccionades.add(id);b.classList.add("actiu")}
+      carregaActes();
+    };
+    cont.appendChild(b);
+  });
+}
+
+// ---- omplir comarca i municipi ----
+async function carregaFiltres(){
+  const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
+  if(coms){
+    coms.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(c=>{
+      const o=document.createElement("option");o.value=c.id;o.textContent=c.nom;$("#f-comarca").appendChild(o);
+    });
+  }
+  const {data: muns} = await sb.from("municipis").select("id,nom").order("nom");
+  if(muns){
+    muns.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(m=>{
+      const o=document.createElement("option");o.value=m.id;o.textContent=m.nom;$("#f-municipi").appendChild(o);
+    });
+  }
+}
+
+// ---- utilitats ----
+function fmtData(d){
+  if(!d) return "Data per confirmar";
+  const x=new Date(d);
+  return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+}
+function nomMunicipi(a){return (a.municipis&&a.municipis.nom)?a.municipis.nom:""}
+function categoriesActe(a){
+  const c=new Set();
+  (a.acte_subcategories||[]).forEach(x=>{
+    if(x.subcategories&&x.subcategories.categories&&x.subcategories.categories.nom)
+      c.add(x.subcategories.categories.nom);
+  });
+  return [...c];
+}
+
+let mapa, capaMarcadors;
+
+// ---- carregar actes ----
 async function carregaActes(){
-  $("#estat-llista").textContent = "Carregant…";
+  $("#estat-llista").textContent="Carregant…";
 
-  // join: municipi i comarca (directa i via municipi)
-  let q = sb.from("actes").select("*, municipis(nom, comarques(nom)), comarques(nom)").order("data_inici", {ascending:true}).limit(2000);
+  let q = sb.from("actes")
+    .select("*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))")
+    .order("data_inici",{ascending:true}).limit(2000);
 
-  // filtres
   const text = $("#f-text").value.trim();
-  const municipi = $("#f-municipi").value;
   const comarca = $("#f-comarca").value;
-  const tipus = $("#f-tipus").value;
+  const municipi = $("#f-municipi").value;
   const desde = $("#f-desde").value;
   const fins = $("#f-fins").value;
-  const passats = $("#f-passats").checked;
 
   if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%`);
   if(municipi) q = q.eq("municipi_id", municipi);
   if(comarca) q = q.eq("comarca_id", comarca);
-  if(tipus) q = q.eq("tipus", tipus);
   if(desde) q = q.gte("data_inici", desde);
   if(fins) q = q.lte("data_inici", fins);
-  // per defecte, només d'avui en endavant (si no es marca "incloure passats")
-  if(!passats && !desde){
-    const avui = new Date().toISOString().slice(0,10);
-    q = q.gte("data_inici", avui);
+
+  // filtre per categories seleccionades (una o més)
+  if(seleccionades.size){
+    const {data: subs} = await sb.from("subcategories").select("id,categoria_id").in("categoria_id",[...seleccionades]);
+    const subIds = (subs||[]).map(s=>s.id);
+    if(subIds.length){
+      const {data: rel} = await sb.from("acte_subcategories").select("acte_id").in("subcategoria_id",subIds);
+      const ids=[...new Set((rel||[]).map(r=>r.acte_id))];
+      q = q.in("id", ids.length?ids:[-1]);
+    } else { q = q.in("id",[-1]); }
   }
 
   const {data, error} = await q;
-  if(error){
-    $("#estat-llista").textContent = "Error carregant les dades: " + error.message;
-    console.error(error);
-    return;
-  }
-  actes = data || [];
+  if(error){$("#estat-llista").textContent="Error carregant les dades: "+error.message;return}
+
+  const actes = data||[];
   $("#compte").textContent = actes.length;
-  pintaLlista(); pintaMapa(); pintaCalendari();
+  $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
+  pintaLlista(actes);
+  pintaMapa(actes);
+  $("#estat-llista").textContent = actes.length?"":"No s'han trobat actes amb aquests filtres.";
 }
 
-// paraules que en català van en minúscula dins d'un nom propi
-const MINUSCULES = new Set(["de","del","dels","la","les","el","els","l","d",
-  "i","a","amb","en","per","sa","ses","ca","can"]);
-// posa cada paraula en majúscula, excepte articles/preposicions (però la 1a sempre en majúscula)
-function capitalitza(text){
-  const trossos = text.toLowerCase().split(/(\s+|['’\-])/);  // conserva separadors
-  let primeraParaula = true;
-  return trossos.map(t=>{
-    if(/^(\s+|['’\-])$/.test(t) || t==="") return t;  // separador, no tocar
-    const minus = MINUSCULES.has(t);
-    let res;
-    if(primeraParaula || !minus){
-      res = t.charAt(0).toUpperCase() + t.slice(1);
-    }else{
-      res = t;
-    }
-    primeraParaula = false;
-    return res;
-  }).join("");
-}
-// comparador que ordena bé en català (té en compte accents i ç)
-const ordreCatala = new Intl.Collator("ca", {sensitivity:"base"});
-
-// el camp municipi ve com a ruta "Agenda:ubicacions/barcelona/anoia/igualada"
-// -> agafem l'última part i la capitalitzem: "Igualada"
-// el municipi ara ve del vincle amb la taula municipis (nom oficial net amb accents)
-function nomMunicipi(a){
-  return (a.municipis && a.municipis.nom) ? a.municipis.nom : "";
-}
-
-// ---- omplir desplegables ----
-async function carregaFiltres(){
-  // comarques: de la taula comarques (value = id)
-  const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
-  if(coms){
-    const llista = coms.sort((a,b)=>ordreCatala.compare(a.nom,b.nom))
-                       .map(c=>({text:c.nom, value:String(c.id)}));
-    ompleSelect("#f-comarca", llista);
-  }
-  // municipis: de la taula municipis (value = id)
-  const {data: muns} = await sb.from("municipis").select("id,nom").order("nom");
-  if(muns){
-    const llista = muns.sort((a,b)=>ordreCatala.compare(a.nom,b.nom))
-                       .map(m=>({text:m.nom, value:String(m.id)}));
-    ompleSelect("#f-municipi", llista);
-  }
-  // tipus: dels actes
-  const {data} = await sb.from("actes").select("tipus").limit(50000);
-  if(data){
-    const tip = [...new Set(data.map(d=>d.tipus).filter(Boolean))].sort(ordreCatala.compare)
-                  .map(t=>({text:capitalitza(t), value:t}));
-    ompleSelect("#f-tipus", tip);
-  }
-}
-function ompleSelect(sel, vals){
-  const el = $(sel);
-  // value = valor(s) real(s) per filtrar · text = versió bonica
-  vals.forEach(v=>{const o=document.createElement("option");o.value=v.value;o.textContent=v.text;el.appendChild(o)});
-}
-
-// ---- vista llista ----
-function pintaLlista(){
-  const g = $("#graella"); g.innerHTML="";
-  $("#estat-llista").textContent = actes.length ? "" : "Cap acte amb aquests filtres.";
+// ---- llista ----
+function pintaLlista(actes){
+  const g=$("#graella");g.innerHTML="";
   actes.forEach(a=>{
-    const t=document.createElement("article");t.className="targeta";
-    const foto = a.imatge ? `style="background-image:url('${a.imatge}')"` : "";
-    const enllac = a.url_original ? `<a class="enllac" href="${a.url_original}" target="_blank" rel="noopener">Detalls →</a>` : "";
-    t.innerHTML = `
-      <div class="foto" ${foto}>${a.tipus?`<span class="tipus">${a.tipus}</span>`:""}</div>
+    const cats=categoriesActe(a);
+    const cat=cats[0]||"";
+    const color=colorCat[cat]||"var(--c-altres)";
+    const foto=a.imatge?`style="background-image:url('${a.imatge}')"`:"";
+    const t=document.createElement("article");
+    t.className="targeta";
+    t.innerHTML=`
+      <div class="foto" ${foto}>${cat?`<span class="etiq" style="background:${color}">${cat}</span>`:""}</div>
       <div class="cos">
         <div class="data">${fmtData(a.data_inici)}</div>
-        <h3>${a.nom||"Sense títol"}</h3>
+        <h3>${a.nom||"Acte sense títol"}</h3>
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
-        <div class="peu">${enllac}</div>
       </div>`;
+    t.onclick=()=>{if(a.url_original)window.open(a.url_original,"_blank")};
     g.appendChild(t);
   });
 }
 
-// ---- vista mapa ----
-function pintaMapa(){
+// ---- mapa ----
+function pintaMapa(actes){
   if(!mapa){
-    mapa = L.map("mapa").setView([41.7,1.7],8);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-      {attribution:"© OpenStreetMap, © CARTO",maxZoom:19}).addTo(mapa);
-    capaMarcadors = L.layerGroup().addTo(mapa);
+    mapa=L.map('mapa').setView([41.7,1.7],8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa);
+    capaMarcadors=L.layerGroup().addTo(mapa);
   }
   capaMarcadors.clearLayers();
-  actes.filter(a=>a.latitud&&a.longitud).forEach(a=>{
-    L.marker([a.latitud,a.longitud]).addTo(capaMarcadors)
-     .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`
-        + (a.url_original?`<br><a href="${a.url_original}" target="_blank">Detalls →</a>`:""));
+  actes.forEach(a=>{
+    if(a.latitud&&a.longitud){
+      L.marker([a.latitud,a.longitud]).addTo(capaMarcadors)
+        .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`);
+    }
   });
 }
 
-// ---- vista calendari ----
-function pintaCalendari(){
-  const cont=$("#calendari");cont.innerHTML="";
-  const any=mesCal.getFullYear(), mes=mesCal.getMonth();
-  $("#cal-titol").textContent = mesCal.toLocaleDateString("ca-ES",{month:"long",year:"numeric"});
-  ["Dl","Dt","Dc","Dj","Dv","Ds","Dg"].forEach(d=>{const e=document.createElement("div");e.className="dia-nom";e.textContent=d;cont.appendChild(e)});
-  const primer=new Date(any,mes,1);
-  let offset=(primer.getDay()+6)%7;
-  for(let i=0;i<offset;i++){const e=document.createElement("div");e.className="dia buit";cont.appendChild(e)}
-  const dies=new Date(any,mes+1,0).getDate();
-  const avui=new Date();
-  for(let d=1;d<=dies;d++){
-    const cel=document.createElement("div");cel.className="dia";
-    if(avui.getFullYear()===any&&avui.getMonth()===mes&&avui.getDate()===d)cel.classList.add("avui");
-    cel.innerHTML=`<div class="num">${d}</div>`;
-    const delDia=actes.filter(a=>{if(!a.data_inici)return false;const x=new Date(a.data_inici);return x.getFullYear()===any&&x.getMonth()===mes&&x.getDate()===d});
-    delDia.slice(0,3).forEach(a=>{
-      const ev=document.createElement("div");ev.className="ev";ev.textContent=a.nom||"Acte";ev.title=a.nom;
-      ev.onclick=()=>{if(a.url_original)window.open(a.url_original,"_blank")};
-      cel.appendChild(ev);
-    });
-    if(delDia.length>3){const m=document.createElement("div");m.className="ev mes";m.textContent=`+${delDia.length-3} més`;cel.appendChild(m)}
-    cont.appendChild(cel);
-  }
-}
-
 // ---- interacció ----
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
-  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("actiu"));
+document.querySelectorAll(".toggle-mapa button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".toggle-mapa button").forEach(x=>x.classList.remove("actiu"));
   b.classList.add("actiu");
   document.querySelectorAll(".vista").forEach(v=>v.classList.remove("actiu"));
   $("#v-"+b.dataset.vista).classList.add("actiu");
   if(b.dataset.vista==="mapa"&&mapa) setTimeout(()=>mapa.invalidateSize(),100);
 });
-$("#cal-prev").onclick=()=>{mesCal.setMonth(mesCal.getMonth()-1);pintaCalendari()};
-$("#cal-next").onclick=()=>{mesCal.setMonth(mesCal.getMonth()+1);pintaCalendari()};
 
-let temporitzador;
-["#f-text","#f-municipi","#f-comarca","#f-tipus","#f-desde","#f-fins","#f-passats"].forEach(s=>{
+let temp;
+["#f-text","#f-comarca","#f-municipi","#f-desde","#f-fins"].forEach(s=>{
   const el=$(s);const ev=(el.tagName==="INPUT"&&el.type==="text")?"input":"change";
-  el.addEventListener(ev,()=>{clearTimeout(temporitzador);temporitzador=setTimeout(carregaActes,350)});
+  el.addEventListener(ev,()=>{clearTimeout(temp);temp=setTimeout(carregaActes,350)});
 });
 
+$("#netejar").onclick=()=>{
+  $("#f-text").value="";$("#f-comarca").value="";$("#f-municipi").value="";
+  $("#f-desde").value="";$("#f-fins").value="";
+  seleccionades.clear();
+  document.querySelectorAll(".cat").forEach(c=>c.classList.remove("actiu"));
+  carregaActes();
+};
+
 // ---- arrencada ----
-carregaFiltres();
-carregaActes();
+(async()=>{
+  await pintaCategories();
+  await carregaFiltres();
+  carregaActes();
+})();
 </script>
 </body>
 </html>
