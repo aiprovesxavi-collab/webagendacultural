@@ -96,15 +96,18 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 .graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.3rem}
 .targeta{background:var(--paper);border:1px solid var(--vora);border-radius:16px;overflow:hidden;
-  transition:transform .22s,box-shadow .22s;cursor:pointer;display:flex;flex-direction:column}
+  transition:transform .22s,box-shadow .22s;cursor:pointer;display:flex;flex-direction:column;height:420px}
 .targeta:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.12)}
-.targeta .foto{height:150px;background:var(--fons);background-size:cover;background-position:center;position:relative}
-.targeta .etiq{position:absolute;left:.6rem;bottom:.6rem;color:#fff;font-weight:700;font-size:.78rem;
-  padding:.25rem .6rem;border-radius:20px;text-shadow:0 1px 3px rgba(0,0,0,.3)}
-.targeta .cos{padding:.9rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
+/* 3/6 imatge de l'acte */
+.targeta .foto{flex:3;background:var(--fons);background-size:cover;background-position:center;position:relative}
+/* 2/6 text */
+.targeta .cos{flex:2;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
-.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15}
+.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
+/* 1/6 imatge de la categoria (sense text) */
+.targeta .franja-cat{flex:1;background-size:cover;background-position:center;background-color:var(--fons)}
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
 .estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
 .peu{text-align:center;color:var(--gris);font-size:.82rem;padding:2rem 1.5rem 3rem;font-weight:300}
@@ -186,6 +189,7 @@ const CATS = [
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
 ];
 const colorCat = {};        // nom BD -> color
+const imgCat = {};          // nom BD -> fitxer d'imatge de categoria
 const idCat = {};           // nom BD -> id (de la BD)
 const seleccionades = new Set();   // ids de categories premudes
 
@@ -199,6 +203,7 @@ async function pintaCategories(){
   cont.innerHTML = "";
   CATS.forEach(c=>{
     colorCat[c.catBD]=c.color;
+    imgCat[c.catBD]=c.img;
     const id = idCat[c.catBD];
     const b = document.createElement("button");
     b.className="cat";
@@ -240,6 +245,15 @@ function fmtData(d){
   return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
 }
 function nomMunicipi(a){return (a.municipis&&a.municipis.nom)?a.municipis.nom:""}
+
+// completa la URL de la imatge: les de la Gencat venen com a ruta relativa
+// (/content/dam/...) i cal afegir-hi el domini.
+function urlImatge(img){
+  if(!img) return "";
+  if(img.startsWith("http")) return img;          // ja és URL completa
+  if(img.startsWith("/")) return "https://agenda.cultura.gencat.cat" + img;
+  return "https://agenda.cultura.gencat.cat/" + img;
+}
 function categoriesActe(a){
   const c=new Set();
   (a.acte_subcategories||[]).forEach(x=>{
@@ -301,17 +315,19 @@ function pintaLlista(actes){
   actes.forEach(a=>{
     const cats=categoriesActe(a);
     const cat=cats[0]||"";
-    const color=colorCat[cat]||"var(--c-altres)";
-    const foto=a.imatge?`style="background-image:url('${a.imatge}')"`:"";
+    const foto=a.imatge?`style="background-image:url('${urlImatge(a.imatge)}')"`:"";
+    const imgC=imgCat[cat]||"";
+    const franjaCat=imgC?`style="background-image:url('${imgC}')"`:"";
     const t=document.createElement("article");
     t.className="targeta";
     t.innerHTML=`
-      <div class="foto" ${foto}>${cat?`<span class="etiq" style="background:${color}">${cat}</span>`:""}</div>
+      <div class="foto" ${foto}></div>
       <div class="cos">
         <div class="data">${fmtData(a.data_inici)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
-      </div>`;
+      </div>
+      <div class="franja-cat" ${franjaCat}></div>`;
     t.onclick=()=>{if(a.url_original)window.open(a.url_original,"_blank")};
     g.appendChild(t);
   });
