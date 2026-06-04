@@ -6,7 +6,7 @@
 <title>Agenda Cultural de Catalunya</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,900;1,9..144,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
 :root{
@@ -28,20 +28,20 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 /* ---------- capçalera ---------- */
 .capcalera{padding:3.2rem 1.5rem 1.5rem;text-align:center;max-width:1200px;margin:0 auto}
-.capcalera h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.4rem,6vw,4rem);letter-spacing:-.02em;line-height:1.02}
-.capcalera h1 em{font-style:italic;font-weight:500}
-.capcalera p{color:var(--gris);font-size:1.05rem;margin-top:.6rem;font-weight:300}
+.capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
+.capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.55em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
+.capcalera p{color:var(--gris);font-size:1.15rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500}
 
 /* ---------- estructura d'apartats ---------- */
 .bloc{max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem}
-.bloc-titol{display:flex;align-items:baseline;gap:.8rem;margin-bottom:1.1rem}
-.bloc-titol .n{font-family:'Fraunces',serif;font-style:italic;font-weight:500;font-size:1.1rem;color:var(--gris)}
-.bloc-titol h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.9rem;letter-spacing:-.01em}
-.bloc-titol .ajuda{margin-left:auto;font-size:.85rem;color:var(--gris);font-weight:300}
+.bloc-titol{display:flex;flex-direction:column;align-items:center;gap:.2rem;margin-bottom:1.1rem;text-align:center}
+.bloc-titol .n{font-family:'Cinzel',serif;font-weight:500;font-size:.95rem;color:var(--gris);letter-spacing:.15em}
+.bloc-titol h2{font-family:'Cinzel',serif;font-weight:700;font-size:1.9rem;letter-spacing:.08em;text-transform:uppercase}
+.bloc-titol .ajuda{font-size:.9rem;color:var(--gris);font-weight:400;font-family:'Cormorant Garamond',serif;font-style:italic}
 
 /* ---------- QUÈ: quadres de categoria (foto apaïsada, tota l'amplada) ---------- */
 .bloc-que{padding-bottom:.6rem}
-.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:#fff;width:100%}
+.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#fff;width:100%}
 @media(max-width:760px){.categories{grid-template-columns:1fr}}
 .cat{position:relative;aspect-ratio:1080/270;overflow:hidden;cursor:pointer;border:none;
   display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
@@ -50,7 +50,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .cat::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.46);transition:background .3s}
 .cat:hover::after{background:rgba(0,0,0,.30)}
 .cat .txt{position:relative;z-index:2;color:#fff;padding:0 1rem}
-.cat .nom{font-family:'Fraunces',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);
+.cat .nom{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);
   letter-spacing:.18em;text-transform:uppercase;line-height:1.1;text-shadow:0 2px 12px rgba(0,0,0,.5)}
 .cat .sub{font-family:'Outfit',sans-serif;font-weight:300;font-size:.82rem;letter-spacing:.05em;
   margin-top:.5rem;opacity:.92;text-shadow:0 1px 6px rgba(0,0,0,.6)}
@@ -61,7 +61,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .cat.actiu .check{display:flex}
 
 /* ---------- QUAN: dates ---------- */
-.dates{display:flex;gap:1.4rem;flex-wrap:wrap}
+.dates{display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center}
 .camp-data{display:flex;flex-direction:column;gap:.35rem}
 .camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
 .camp-data input{font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1.5px solid var(--vora);
@@ -69,7 +69,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .camp-data input:focus{outline:none;border-color:var(--c-literatura)}
 
 /* ---------- ON: lloc ---------- */
-.lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center}
+.lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:center}
 .lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
   border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
 .lloc-controls select:focus{outline:none;border-color:var(--c-plastiques)}
@@ -86,7 +86,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 /* ---------- resultats ---------- */
 .barra-res{max-width:1200px;margin:1.2rem auto .4rem;padding:0 1.5rem;display:flex;align-items:baseline;gap:.6rem}
-.barra-res .compte{font-family:'Fraunces',serif;font-weight:900;font-size:1.5rem}
+.barra-res .compte{font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem}
 .barra-res .et{color:var(--gris);font-weight:300}
 .barra-res .netejar{margin-left:auto;background:none;border:none;color:var(--c-esceniques);font-weight:600;
   cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem}
@@ -103,7 +103,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   padding:.25rem .6rem;border-radius:20px;text-shadow:0 1px 3px rgba(0,0,0,.3)}
 .targeta .cos{padding:.9rem 1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;flex:1}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
-.targeta h3{font-family:'Fraunces',serif;font-weight:600;font-size:1.12rem;line-height:1.2}
+.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
 .estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
@@ -138,15 +138,14 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 <!-- ON -->
 <section class="bloc">
-  <div class="bloc-titol"><span class="n">03</span><h2>On</h2>
-    <div class="toggle-mapa" style="margin-left:auto">
-      <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
-      <button id="t-mapa" data-vista="mapa">Mapa</button>
-    </div>
-  </div>
+  <div class="bloc-titol"><span class="n">03</span><h2>On</h2><span class="ajuda">Comarca o municipi</span></div>
   <div class="lloc-controls">
     <select id="f-comarca"><option value="">Totes les comarques</option></select>
     <select id="f-municipi"><option value="">Tots els municipis</option></select>
+    <div class="toggle-mapa">
+      <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
+      <button id="t-mapa" data-vista="mapa">Mapa</button>
+    </div>
   </div>
 </section>
 
