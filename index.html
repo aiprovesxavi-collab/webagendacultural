@@ -286,7 +286,9 @@ async function carregaActes(){
   if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%`);
   if(municipi) q = q.eq("municipi_id", municipi);
   if(comarca) q = q.eq("comarca_id", comarca);
-  if(desde) q = q.gte("data_inici", desde);
+  // data: si l'usuari no posa "des de", per defecte només d'avui en endavant
+  const avui = new Date().toISOString().slice(0,10);
+  q = q.gte("data_inici", desde || avui);
   if(fins) q = q.lte("data_inici", fins);
 
   // filtre per categories: sobre la taula relacionada, dins la mateixa consulta
