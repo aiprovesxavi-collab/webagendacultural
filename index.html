@@ -62,8 +62,8 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 /* ---------- QUAN: dates ---------- */
 .dates{display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center}
-.camp-data{display:flex;flex-direction:column;gap:.35rem}
-.camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
+.camp-data{display:flex;flex-direction:column;gap:.35rem;align-items:center}
+.camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em;text-align:center}
 .camp-data input{font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1.5px solid var(--vora);
   border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
 .camp-data input:focus{outline:none;border-color:var(--c-literatura)}
@@ -95,19 +95,18 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .vista.actiu{display:block}
 
 .graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.3rem}
-.targeta{background:var(--paper);border:1px solid var(--vora);border-radius:16px;overflow:hidden;
-  transition:transform .22s,box-shadow .22s;cursor:pointer;display:flex;flex-direction:column;height:420px}
-.targeta:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.12)}
-/* 3/6 imatge de l'acte */
-.targeta .foto{flex:3;background:var(--fons);background-size:cover;background-position:center;position:relative}
-/* 2/6 text */
+.targeta{background:var(--paper);border:1px solid rgba(0,0,0,.04);border-radius:16px;overflow:hidden;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;cursor:pointer;display:flex;flex-direction:column;height:380px;
+  box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.10), 0 14px 30px rgba(0,0,0,.08)}
+.targeta:hover{transform:translateY(-6px);box-shadow:0 4px 8px rgba(0,0,0,.08), 0 14px 28px rgba(0,0,0,.16), 0 26px 50px rgba(0,0,0,.12)}
+/* 3/5 imatge de l'acte */
+.targeta .foto{flex:3;background:var(--fons);background-size:cover;background-position:center}
+/* 2/5 text */
 .targeta .cos{flex:2;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
 .targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
-/* 1/6 imatge de la categoria (sense text) */
-.targeta .franja-cat{flex:1;background-size:cover;background-position:center;background-color:var(--fons)}
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
 .estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
 .peu{text-align:center;color:var(--gris);font-size:.82rem;padding:2rem 1.5rem 3rem;font-weight:300}
@@ -126,22 +125,22 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 
 <!-- QUÈ -->
 <section class="bloc bloc-que">
-  <div class="bloc-titol"><span class="n">01</span><h2>Què</h2><span class="ajuda">Tria una o més categories</span></div>
+  <div class="bloc-titol"><h2>Què</h2></div>
 </section>
 <div class="categories" id="categories"></div>
 
 <!-- QUAN -->
 <section class="bloc">
-  <div class="bloc-titol"><span class="n">02</span><h2>Quan</h2><span class="ajuda">Del primer al darrer dia</span></div>
+  <div class="bloc-titol"><h2>Quan</h2></div>
   <div class="dates">
-    <div class="camp-data"><label>Des del dia</label><input id="f-desde" type="date"></div>
-    <div class="camp-data"><label>Fins al dia</label><input id="f-fins" type="date"></div>
+    <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
+    <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
   </div>
 </section>
 
 <!-- ON -->
 <section class="bloc">
-  <div class="bloc-titol"><span class="n">03</span><h2>On</h2><span class="ajuda">Comarca o municipi</span></div>
+  <div class="bloc-titol"><h2>On</h2></div>
   <div class="lloc-controls">
     <select id="f-comarca"><option value="">Totes les comarques</option></select>
     <select id="f-municipi"><option value="">Tots els municipis</option></select>
@@ -313,11 +312,7 @@ async function carregaActes(){
 function pintaLlista(actes){
   const g=$("#graella");g.innerHTML="";
   actes.forEach(a=>{
-    const cats=categoriesActe(a);
-    const cat=cats[0]||"";
     const foto=a.imatge?`style="background-image:url('${urlImatge(a.imatge)}')"`:"";
-    const imgC=imgCat[cat]||"";
-    const franjaCat=imgC?`style="background-image:url('${imgC}')"`:"";
     const t=document.createElement("article");
     t.className="targeta";
     t.innerHTML=`
@@ -326,8 +321,7 @@ function pintaLlista(actes){
         <div class="data">${fmtData(a.data_inici)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
-      </div>
-      <div class="franja-cat" ${franjaCat}></div>`;
+      </div>`;
     t.onclick=()=>{if(a.url_original)window.open(a.url_original,"_blank")};
     g.appendChild(t);
   });
