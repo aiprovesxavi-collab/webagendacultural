@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acte · Agenda Cultural de Catalunya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#16130f; --gris:#6b6359; --paper:#ffffff; --fons:#fafafa;
+  --vora:#ececec; --c-musicals:#f0820a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--tinta);line-height:1.5;-webkit-font-smoothing:antialiased}
+.detall{max-width:820px;margin:0 auto;padding:1.4rem 1.5rem 5rem}
+.tornar{background:none;border:none;color:var(--tinta);font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:.95rem;cursor:pointer;padding:.6rem 0;display:inline-flex;align-items:center;gap:.4rem}
+.tornar:hover{color:var(--c-musicals)}
+.foto-gran{width:100%;aspect-ratio:16/9;border-radius:18px;background:var(--fons);background-size:cover;
+  background-position:center;margin:.5rem 0 1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.d-data{font-family:'Outfit',sans-serif;font-weight:600;color:var(--c-musicals);text-transform:uppercase;
+  letter-spacing:.05em;font-size:.95rem}
+h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.15;
+  margin:.5rem 0;letter-spacing:.02em}
+.d-subtitol{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem;color:var(--gris);margin-bottom:1.2rem}
+.d-meta{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
+.chip{background:var(--fons);border:1px solid var(--vora);border-radius:30px;padding:.45rem .95rem;
+  font-size:.88rem;font-weight:500;display:inline-flex;align-items:center;gap:.4rem}
+.chip.gratis{background:#e9f9f0;border-color:#bfe9d2;color:#1aa179}
+.d-artistes{font-family:'Outfit',sans-serif;font-size:.95rem;color:var(--tinta);font-weight:500;margin:.4rem 0}
+.d-descripcio{font-family:'Cormorant Garamond',serif;font-size:1.25rem;line-height:1.7;color:#2a2620;margin:1.4rem 0;white-space:pre-line}
+.d-saber{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.6;color:var(--gris);
+  border-left:3px solid var(--c-musicals);padding:.4rem 0 .4rem 1rem;margin:1.4rem 0;background:linear-gradient(90deg,rgba(240,130,10,.04),transparent)}
+.d-saber::before{content:"Sabies que… ";font-style:normal;font-weight:600;color:var(--c-musicals)}
+.d-enllac{display:inline-block;margin-top:1rem;background:var(--tinta);color:#fff;text-decoration:none;
+  padding:.85rem 1.6rem;border-radius:12px;font-family:'Outfit',sans-serif;font-weight:600;transition:transform .2s}
+.d-enllac:hover{transform:translateY(-2px)}
+.estat{text-align:center;color:var(--gris);padding:4rem 1.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem}
+</style>
+</head>
+<body>
+
+<div class="detall">
+  <a class="tornar" href="index.html">← Tornar als actes</a>
+  <div id="contingut"><div class="estat">Carregant l'acte…</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+function urlImatge(img){
+  if(!img) return "";
+  if(img.startsWith("http")) return img;
+  if(img.startsWith("/")) return "https://agenda.cultura.gencat.cat" + img;
+  return "https://agenda.cultura.gencat.cat/" + img;
+}
+function fmtData(d){
+  if(!d) return "Data per confirmar";
+  return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+}
+function fmtHora(h){
+  if(!h) return "";
+  const m=h.match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?/);
+  if(!m) return "";
+  let hh=parseInt(m[1],10); if(hh<0||hh>23) return "";
+  return String(hh).padStart(2,'0')+":"+(m[2]||"00");
+}
+function fmtDataHora(d,h){const data=fmtData(d);const hora=fmtHora(h);return hora?`${data} · ${hora}`:data;}
+function categoriesActe(a){
+  const c=new Set();
+  (a.acte_subcategories||[]).forEach(x=>{
+    if(x.subcategories&&x.subcategories.categories&&x.subcategories.categories.nom)
+      c.add(x.subcategories.categories.nom);
+  });
+  return [...c];
+}
+
+async function carrega(){
+  const params = new URLSearchParams(location.search);
+  const id = params.get("id");
+  if(!id){ document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha indicat cap acte.</div>'; return; }
+
+  const {data, error} = await sb.from("actes")
+    .select("*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))")
+    .eq("id", id).single();
+
+  if(error || !data){
+    document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha trobat l\'acte.</div>';
+    return;
+  }
+  pinta(data);
+}
+
+function pinta(a){
+  document.title = (a.nom||"Acte") + " · Agenda Cultural";
+  const lloc=[a.lloc_nom, (a.municipis&&a.municipis.nom)||""].filter(Boolean).join(", ");
+  const cats=categoriesActe(a);
+
+  let meta="";
+  if(lloc) meta+=`<span class="chip">📍 ${lloc}</span>`;
+  if(a.modalitat) meta+=`<span class="chip">${a.modalitat}</span>`;
+  if(a.preu_gratuit===true) meta+=`<span class="chip gratis">Gratuït</span>`;
+  else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
+  if(cats.length) meta+=`<span class="chip">${cats.join(" · ")}</span>`;
+
+  const url = a.url_original;
+  const enllacHtml = (url && url.startsWith("http"))
+    ? `<a class="d-enllac" href="${url}" target="_blank" rel="noopener">Més informació i entrades</a>` : "";
+
+  document.getElementById("contingut").innerHTML = `
+    ${a.imatge?`<div class="foto-gran" style="background-image:url('${urlImatge(a.imatge)}')"></div>`:""}
+    <div class="d-data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
+    <h1>${a.nom||"Acte sense títol"}</h1>
+    ${a.subtitol?`<div class="d-subtitol">${a.subtitol}</div>`:""}
+    <div class="d-meta">${meta}</div>
+    ${a.artistes?`<div class="d-artistes">Amb: ${a.artistes}</div>`:""}
+    <div class="d-descripcio">${a.descripcio_net || a.descripcio || ""}</div>
+    ${a.a_saber?`<div class="d-saber">${a.a_saber}</div>`:""}
+    ${enllacHtml}
+  `;
+}
+
+carrega();
+</script>
+</body>
+</html>

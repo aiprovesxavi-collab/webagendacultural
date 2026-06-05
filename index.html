@@ -107,6 +107,9 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
+.targeta .subtit{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.98rem;color:var(--gris);line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
 .estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
 .peu{text-align:center;color:var(--gris);font-size:.82rem;padding:2rem 1.5rem 3rem;font-weight:300}
@@ -245,6 +248,24 @@ function fmtData(d){
 }
 function nomMunicipi(a){return (a.municipis&&a.municipis.nom)?a.municipis.nom:""}
 
+// extreu l'hora del text de l'horari ("A les 18 h", "20.30 h"...) i la formata 20:00
+function fmtHora(horari){
+  if(!horari) return "";
+  // busca un patró d'hora: 18, 18h, 18:30, 18.30, 20 h...
+  const m = horari.match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?/);
+  if(!m) return "";
+  let h = parseInt(m[1],10);
+  let min = m[2]?m[2]:"00";
+  if(h<0||h>23) return "";
+  return String(h).padStart(2,'0')+":"+min;
+}
+// data + hora: "dimecres, 4 de juny · 20:00"
+function fmtDataHora(d, horari){
+  const data = fmtData(d);
+  const hora = fmtHora(horari);
+  return hora ? `${data} · ${hora}` : data;
+}
+
 // completa la URL de la imatge: les de la Gencat venen com a ruta relativa
 // (/content/dam/...) i cal afegir-hi el domini.
 function urlImatge(img){
@@ -283,7 +304,7 @@ async function carregaActes(){
   const desde = $("#f-desde").value;
   const fins = $("#f-fins").value;
 
-  if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%`);
+  if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%,descripcio_net.ilike.%${text}%`);
   if(municipi) q = q.eq("municipi_id", municipi);
   if(comarca) q = q.eq("comarca_id", comarca);
   // data: si l'usuari no posa "des de", per defecte només d'avui en endavant
@@ -320,11 +341,12 @@ function pintaLlista(actes){
     t.innerHTML=`
       <div class="foto" ${foto}></div>
       <div class="cos">
-        <div class="data">${fmtData(a.data_inici)}</div>
+        <div class="data">${fmtDataHora(a.data_inici, a.horari_text)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
+        ${a.subtitol?`<div class="subtit">${a.subtitol}</div>`:""}
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
       </div>`;
-    t.onclick=()=>{if(a.url_original)window.open(a.url_original,"_blank")};
+    t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
     g.appendChild(t);
   });
 }
