@@ -304,7 +304,10 @@ async function carregaActes(){
   const desde = $("#f-desde").value;
   const fins = $("#f-fins").value;
 
-  if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%,descripcio_net.ilike.%${text}%`);
+  if(text){
+    const t = text.replaceAll(",", " ").trim();   // les comes trencarien el filtre .or
+    q = q.or(`nom.ilike.%${t}%,subtitol.ilike.%${t}%,descripcio.ilike.%${t}%,descripcio_net.ilike.%${t}%,artistes.ilike.%${t}%,lloc_nom.ilike.%${t}%,a_saber.ilike.%${t}%`);
+  }
   if(municipi) q = q.eq("municipi_id", municipi);
   if(comarca) q = q.eq("comarca_id", comarca);
   // data: si l'usuari no posa "des de", per defecte només d'avui en endavant
