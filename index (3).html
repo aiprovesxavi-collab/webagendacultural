@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda Cultural de Catalunya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root{
+  --tinta:#16130f; --gris:#6b6359; --paper:#ffffff; --fons:#fafafa;
+  --vora:#ececec; --ombra:rgba(0,0,0,.08);
+  /* colors intensos per categoria */
+  --c-esceniques:#e23b54;  /* vermell carmí */
+  --c-musicals:#f0820a;    /* taronja */
+  --c-plastiques:#1aa179;  /* verd maragda */
+  --c-popular:#d4264e;     /* magenta */
+  --c-literatura:#3257be;  /* blau */
+  --c-cinema:#7b3fe4;      /* violeta */
+  --c-formacio:#0f9bd1;    /* cian */
+  --c-altres:#5a6472;      /* grafit */
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--tinta);-webkit-font-smoothing:antialiased;line-height:1.5}
+
+/* ---------- capçalera ---------- */
+.capcalera{padding:3.2rem 1.5rem 1.5rem;text-align:center;max-width:1200px;margin:0 auto}
+.capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
+.capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.55em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
+.capcalera p{color:var(--gris);font-size:1.15rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500}
+
+/* ---------- estructura d'apartats ---------- */
+.bloc{max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem}
+.bloc-titol{display:flex;flex-direction:column;align-items:center;gap:.2rem;margin-bottom:1.1rem;text-align:center}
+.bloc-titol .n{font-family:'Cinzel',serif;font-weight:500;font-size:.95rem;color:var(--gris);letter-spacing:.15em}
+.bloc-titol h2{font-family:'Cinzel',serif;font-weight:700;font-size:1.9rem;letter-spacing:.08em;text-transform:uppercase}
+.bloc-titol .ajuda{font-size:.9rem;color:var(--gris);font-weight:400;font-family:'Cormorant Garamond',serif;font-style:italic}
+
+/* ---------- QUÈ: quadres de categoria (foto apaïsada, tota l'amplada) ---------- */
+.bloc-que{padding-bottom:.6rem}
+.categories{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#fff;width:100%}
+@media(max-width:760px){.categories{grid-template-columns:1fr}}
+.cat{position:relative;aspect-ratio:1080/270;overflow:hidden;cursor:pointer;border:none;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+  background-size:cover;background-position:center;background-color:#222;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.cat::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.46);transition:background .3s}
+.cat:hover::after{background:rgba(0,0,0,.30)}
+.cat .txt{position:relative;z-index:2;color:#fff;padding:0 1rem}
+.cat .nom{font-family:'Cinzel',serif;font-weight:600;font-size:clamp(1.4rem,3vw,2.4rem);
+  letter-spacing:.18em;text-transform:uppercase;line-height:1.1;text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.cat .sub{font-family:'Outfit',sans-serif;font-weight:300;font-size:.82rem;letter-spacing:.05em;
+  margin-top:.5rem;opacity:.92;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.cat .check{position:absolute;top:.8rem;right:.8rem;z-index:3;width:30px;height:30px;border-radius:50%;
+  background:#fff;color:var(--tint,#000);display:none;align-items:center;justify-content:center;font-weight:800}
+.cat.actiu::after{background:color-mix(in srgb, var(--tint,#000) 55%, rgba(0,0,0,.45))}
+.cat.actiu{box-shadow:inset 0 0 0 4px var(--tint,#000)}
+.cat.actiu .check{display:flex}
+
+/* ---------- QUAN: dates ---------- */
+.dates{display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center}
+.camp-data{display:flex;flex-direction:column;gap:.35rem;align-items:center}
+.camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em;text-align:center}
+.camp-data input{font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1.5px solid var(--vora);
+  border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
+.camp-data input:focus{outline:none;border-color:var(--c-literatura)}
+
+/* ---------- ON: lloc ---------- */
+.lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:center}
+.lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
+  border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
+.lloc-controls select:focus{outline:none;border-color:var(--c-plastiques)}
+.toggle-mapa{display:flex;gap:.3rem;background:var(--fons);border-radius:11px;padding:.3rem}
+.toggle-mapa button{border:none;background:none;padding:.5rem .95rem;border-radius:8px;cursor:pointer;
+  font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--gris);transition:all .2s}
+.toggle-mapa button.actiu{background:var(--tinta);color:#fff}
+
+/* ---------- cerca de text ---------- */
+.cerca{max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.cerca input{width:100%;font-family:'Outfit',sans-serif;font-size:1.05rem;padding:.85rem 1.1rem;
+  border:1.5px solid var(--vora);border-radius:13px;background:var(--paper)}
+.cerca input:focus{outline:none;border-color:var(--c-musicals)}
+
+/* ---------- resultats ---------- */
+.barra-res{max-width:1200px;margin:1.2rem auto .4rem;padding:0 1.5rem;display:flex;align-items:baseline;gap:.6rem}
+.barra-res .compte{font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem}
+.barra-res .et{color:var(--gris);font-weight:300}
+.barra-res .netejar{margin-left:auto;background:none;border:none;color:var(--c-esceniques);font-weight:600;
+  cursor:pointer;font-family:'Outfit',sans-serif;font-size:.9rem}
+
+.vista{display:none;max-width:1200px;margin:0 auto;padding:1rem 1.5rem 4rem}
+.vista.actiu{display:block}
+
+.graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.3rem}
+.targeta{background:var(--paper);border:1px solid rgba(0,0,0,.04);border-radius:16px;overflow:hidden;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;cursor:pointer;display:flex;flex-direction:column;height:380px;
+  box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.10), 0 14px 30px rgba(0,0,0,.08)}
+.targeta:hover{transform:translateY(-6px);box-shadow:0 4px 8px rgba(0,0,0,.08), 0 14px 28px rgba(0,0,0,.16), 0 26px 50px rgba(0,0,0,.12)}
+/* 3/5 imatge de l'acte */
+.targeta .foto{flex:3;background:var(--fons);background-size:cover;background-position:center}
+/* 2/5 text */
+.targeta .cos{flex:2;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
+.targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
+.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
+.targeta .subtit{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.98rem;color:var(--gris);line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* en mode detall, amaga tota la navegació (cerca, filtres, resultats, llista, mapa) */
+body.mode-detall .cerca,
+body.mode-detall .bloc,
+body.mode-detall .categories,
+body.mode-detall .barra-res,
+body.mode-detall #v-llista,
+body.mode-detall #v-mapa{display:none !important}
+body.mode-detall #v-detall{display:block}
+
+/* ---------- vista de detall d'un acte ---------- */
+#v-detall{display:none}
+#v-detall.actiu{display:block}
+.detall{max-width:820px;margin:0 auto;padding:1rem 1.5rem 5rem}
+.detall .tornar{background:none;border:none;color:var(--tinta);font-family:'Outfit',sans-serif;font-weight:600;
+  font-size:.95rem;cursor:pointer;padding:.6rem 0;display:inline-flex;align-items:center;gap:.4rem}
+.detall .tornar:hover{color:var(--c-musicals)}
+.detall .foto-gran{width:100%;aspect-ratio:16/9;border-radius:18px;background:var(--fons);background-size:cover;
+  background-position:center;margin:.5rem 0 1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.14)}
+.detall .d-data{font-family:'Outfit',sans-serif;font-weight:600;color:var(--c-musicals);text-transform:uppercase;
+  letter-spacing:.05em;font-size:.95rem}
+.detall h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.15;
+  margin:.5rem 0;letter-spacing:.02em}
+.detall .d-subtitol{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem;color:var(--gris);margin-bottom:1.2rem}
+.detall .d-meta{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
+.detall .chip{background:var(--fons);border:1px solid var(--vora);border-radius:30px;padding:.45rem .95rem;
+  font-size:.88rem;font-weight:500;display:inline-flex;align-items:center;gap:.4rem}
+.detall .chip.gratis{background:#e9f9f0;border-color:#bfe9d2;color:#1aa179}
+.detall .d-descripcio{font-family:'Cormorant Garamond',serif;font-size:1.25rem;line-height:1.7;color:#2a2620;margin:1.4rem 0}
+.detall .d-artistes{font-family:'Outfit',sans-serif;font-size:.95rem;color:var(--tinta);font-weight:500;margin:.4rem 0}
+.detall .d-saber{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.6;color:var(--gris);
+  border-left:3px solid var(--c-musicals);padding:.4rem 0 .4rem 1rem;margin:1.4rem 0;background:linear-gradient(90deg,rgba(240,130,10,.04),transparent)}
+.detall .d-saber::before{content:"Sabies que… ";font-style:normal;font-weight:600;color:var(--c-musicals)}
+.detall .d-enllac{display:inline-block;margin-top:1rem;background:var(--tinta);color:#fff;text-decoration:none;
+  padding:.85rem 1.6rem;border-radius:12px;font-family:'Outfit',sans-serif;font-weight:600;transition:transform .2s}
+.detall .d-enllac:hover{transform:translateY(-2px)}
+#mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
+.estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
+.peu{text-align:center;color:var(--gris);font-size:.82rem;padding:2rem 1.5rem 3rem;font-weight:300}
+</style>
+</head>
+<body>
+
+<header class="capcalera">
+  <h1>Agenda Cultural <em>de Catalunya</em></h1>
+  <p>Descobreix què passa, quan i on</p>
+</header>
+
+<div class="cerca">
+  <input id="f-text" type="text" placeholder="Cerca un acte, un artista, un tema…">
+</div>
+
+<!-- QUÈ -->
+<section class="bloc bloc-que">
+  <div class="bloc-titol"><h2>Què</h2></div>
+</section>
+<div class="categories" id="categories"></div>
+
+<!-- QUAN -->
+<section class="bloc">
+  <div class="bloc-titol"><h2>Quan</h2></div>
+  <div class="dates">
+    <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
+    <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
+  </div>
+</section>
+
+<!-- ON -->
+<section class="bloc">
+  <div class="bloc-titol"><h2>On</h2></div>
+  <div class="lloc-controls">
+    <select id="f-comarca"><option value="">Totes les comarques</option></select>
+    <select id="f-municipi"><option value="">Tots els municipis</option></select>
+    <div class="toggle-mapa">
+      <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
+      <button id="t-mapa" data-vista="mapa">Mapa</button>
+    </div>
+  </div>
+</section>
+
+<div class="barra-res">
+  <span class="compte" id="compte">…</span><span class="et" id="et-res">actes trobats</span>
+  <button class="netejar" id="netejar">Esborrar filtres</button>
+</div>
+
+<div class="vista actiu" id="v-llista">
+  <div class="graella" id="graella"></div>
+  <div class="estat" id="estat-llista"></div>
+</div>
+<div class="vista" id="v-mapa"><div id="mapa"></div></div>
+
+<!-- vista de detall d'un acte -->
+<div id="v-detall">
+  <div class="detall">
+    <button class="tornar" id="tornar-llista">← Tornar als actes</button>
+    <div class="foto-gran" id="d-foto"></div>
+    <div class="d-data" id="d-data"></div>
+    <h1 id="d-titol"></h1>
+    <div class="d-subtitol" id="d-subtitol"></div>
+    <div class="d-meta" id="d-meta"></div>
+    <div class="d-artistes" id="d-artistes"></div>
+    <div class="d-descripcio" id="d-descripcio"></div>
+    <div class="d-saber" id="d-saber"></div>
+    <a class="d-enllac" id="d-enllac" target="_blank" rel="noopener">Més informació i entrades</a>
+  </div>
+</div>
+
+<footer class="peu">Dades obertes de la Generalitat de Catalunya · Agenda Cultural</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ---- CONFIGURACIÓ SUPABASE ----
+const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = s => document.querySelector(s);
+const ordreCatala = new Intl.Collator('ca');
+
+// ---- definició visual de les 8 categories ----
+// catBD = nom EXACTE a la base de dades · etiqueta = text del botó · sub = subtítol · img = fitxer
+const CATS = [
+  {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · dansa · circ · màgia · titelles", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
+  {catBD:"Arts musicals",   etiqueta:"Música",   sub:"clàssica · jazz · blues · rock · pop", color:"var(--c-musicals)", img:"imatges/musicals.jpg"},
+  {catBD:"Arts plàstiques", etiqueta:"Exposicions",     sub:"fotografia · pintura · escultura", color:"var(--c-plastiques)", img:"imatges/plastiques.jpg"},
+  {catBD:"Cultura popular", etiqueta:"Cultura popular", sub:"festes majors · correfocs · castellers", color:"var(--c-popular)", img:"imatges/popular.jpg"},
+  {catBD:"Literatura",      etiqueta:"Conferències",    sub:"recitals de poesia · conferències", color:"var(--c-literatura)", img:"imatges/literatura.jpg"},
+  {catBD:"Cinema",          etiqueta:"Cinema",          sub:"pel·lícules a la fresca · cicles temàtics", color:"var(--c-cinema)", img:"imatges/cinema.jpg"},
+  {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
+  {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
+];
+const colorCat = {};        // nom BD -> color
+const imgCat = {};          // nom BD -> fitxer d'imatge de categoria
+const idCat = {};           // nom BD -> id (de la BD)
+const seleccionades = new Set();   // ids de categories premudes
+
+// ---- pintar els quadres de categoria ----
+async function pintaCategories(){
+  // agafar els ids reals de la BD
+  const {data} = await sb.from("categories").select("id,nom");
+  (data||[]).forEach(c=>idCat[c.nom]=c.id);
+
+  const cont = $("#categories");
+  cont.innerHTML = "";
+  CATS.forEach(c=>{
+    colorCat[c.catBD]=c.color;
+    imgCat[c.catBD]=c.img;
+    const id = idCat[c.catBD];
+    const b = document.createElement("button");
+    b.className="cat";
+    b.style.setProperty("--tint", c.color);
+    b.style.backgroundImage = `url('${c.img}')`;
+    b.innerHTML = `<div class="txt"><div class="nom">${c.etiqueta}</div>`
+                + (c.sub?`<div class="sub">${c.sub}</div>`:"")
+                + `</div><span class="check">✓</span>`;
+    b.onclick = ()=>{
+      if(!id) return;
+      if(seleccionades.has(id)){seleccionades.delete(id);b.classList.remove("actiu")}
+      else{seleccionades.add(id);b.classList.add("actiu")}
+      carregaActes();
+    };
+    cont.appendChild(b);
+  });
+}
+
+// ---- omplir comarca i municipi ----
+async function carregaFiltres(){
+  const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
+  if(coms){
+    coms.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(c=>{
+      const o=document.createElement("option");o.value=c.id;o.textContent=c.nom;$("#f-comarca").appendChild(o);
+    });
+  }
+  const {data: muns} = await sb.from("municipis").select("id,nom").order("nom");
+  if(muns){
+    muns.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(m=>{
+      const o=document.createElement("option");o.value=m.id;o.textContent=m.nom;$("#f-municipi").appendChild(o);
+    });
+  }
+}
+
+// ---- utilitats ----
+function fmtData(d){
+  if(!d) return "Data per confirmar";
+  const x=new Date(d);
+  return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+}
+function nomMunicipi(a){return (a.municipis&&a.municipis.nom)?a.municipis.nom:""}
+
+// extreu l'hora del text de l'horari ("A les 18 h", "20.30 h"...) i la formata 20:00
+function fmtHora(horari){
+  if(!horari) return "";
+  // busca un patró d'hora: 18, 18h, 18:30, 18.30, 20 h...
+  const m = horari.match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?/);
+  if(!m) return "";
+  let h = parseInt(m[1],10);
+  let min = m[2]?m[2]:"00";
+  if(h<0||h>23) return "";
+  return String(h).padStart(2,'0')+":"+min;
+}
+// data + hora: "dimecres, 4 de juny · 20:00"
+function fmtDataHora(d, horari){
+  const data = fmtData(d);
+  const hora = fmtHora(horari);
+  return hora ? `${data} · ${hora}` : data;
+}
+
+// completa la URL de la imatge: les de la Gencat venen com a ruta relativa
+// (/content/dam/...) i cal afegir-hi el domini.
+function urlImatge(img){
+  if(!img) return "";
+  if(img.startsWith("http")) return img;          // ja és URL completa
+  if(img.startsWith("/")) return "https://agenda.cultura.gencat.cat" + img;
+  return "https://agenda.cultura.gencat.cat/" + img;
+}
+function categoriesActe(a){
+  const c=new Set();
+  (a.acte_subcategories||[]).forEach(x=>{
+    if(x.subcategories&&x.subcategories.categories&&x.subcategories.categories.nom)
+      c.add(x.subcategories.categories.nom);
+  });
+  return [...c];
+}
+
+let mapa, capaMarcadors;
+
+// ---- carregar actes ----
+async function carregaActes(){
+  $("#estat-llista").textContent="Carregant…";
+
+  const cats = [...seleccionades];
+  // si hi ha categories seleccionades, fem el join INTERN cap a les subcategories
+  // (filtra dins la mateixa consulta, sense el límit de 1000 ids)
+  const sel = cats.length
+    ? "*, municipis(nom), acte_subcategories!inner(subcategories!inner(nom, categoria_id, categories(nom)))"
+    : "*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))";
+
+  let q = sb.from("actes").select(sel).order("data_inici",{ascending:true}).limit(2000);
+
+  const text = $("#f-text").value.trim();
+  const comarca = $("#f-comarca").value;
+  const municipi = $("#f-municipi").value;
+  const desde = $("#f-desde").value;
+  const fins = $("#f-fins").value;
+
+  if(text) q = q.or(`nom.ilike.%${text}%,descripcio.ilike.%${text}%,descripcio_net.ilike.%${text}%`);
+  if(municipi) q = q.eq("municipi_id", municipi);
+  if(comarca) q = q.eq("comarca_id", comarca);
+  // data: si l'usuari no posa "des de", per defecte només d'avui en endavant
+  const avui = new Date().toISOString().slice(0,10);
+  q = q.gte("data_inici", desde || avui);
+  if(fins) q = q.lte("data_inici", fins);
+
+  // filtre per categories: sobre la taula relacionada, dins la mateixa consulta
+  if(cats.length){
+    q = q.in("acte_subcategories.subcategories.categoria_id", cats);
+  }
+
+  const {data, error} = await q;
+  if(error){$("#estat-llista").textContent="Error carregant les dades: "+error.message;return}
+
+  // amb !inner i diverses subcategories, un acte pot sortir repetit -> dedupliquem
+  const vistos = new Set();
+  const actes = (data||[]).filter(a=>{ if(vistos.has(a.id))return false; vistos.add(a.id); return true; });
+
+  $("#compte").textContent = actes.length;
+  $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
+  pintaLlista(actes);
+  pintaMapa(actes);
+  $("#estat-llista").textContent = actes.length?"":"No s'han trobat actes amb aquests filtres.";
+}
+
+// ---- detall d'un acte ----
+function obreDetall(a){
+  $("#d-foto").style.backgroundImage = a.imatge?`url('${urlImatge(a.imatge)}')`:"";
+  // data: si Gemini ha fet data_text, el fem servir; si no, data + hora
+  $("#d-data").textContent = a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+  $("#d-titol").textContent = a.nom||"Acte sense títol";
+  const sub=$("#d-subtitol"); sub.textContent=a.subtitol||""; sub.style.display=a.subtitol?"block":"none";
+
+  // meta (lloc, modalitat, preu/gratuït, categories)
+  const meta=$("#d-meta"); meta.innerHTML="";
+  const lloc=[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ");
+  if(lloc) meta.innerHTML+=`<span class="chip">📍 ${lloc}</span>`;
+  if(a.modalitat) meta.innerHTML+=`<span class="chip">${a.modalitat}</span>`;
+  if(a.preu_gratuit===true) meta.innerHTML+=`<span class="chip gratis">Gratuït</span>`;
+  else if(a.preu) meta.innerHTML+=`<span class="chip">${a.preu}</span>`;
+  const cats=categoriesActe(a);
+  if(cats.length) meta.innerHTML+=`<span class="chip">${cats.join(" · ")}</span>`;
+
+  $("#d-descripcio").textContent = a.descripcio_net || a.descripcio || "";
+
+  // artistes
+  const art=$("#d-artistes");
+  if(a.artistes){ art.textContent="Amb: "+a.artistes; art.style.display="block"; }
+  else art.style.display="none";
+
+  // a saber
+  const saber=$("#d-saber");
+  if(a.a_saber){ saber.textContent=a.a_saber; saber.style.display="block"; }
+  else saber.style.display="none";
+
+  const enllac=$("#d-enllac");
+  const url = a.enllac_entrades || a.url_original;
+  if(url && url.startsWith("http")){ enllac.href=url; enllac.style.display="inline-block"; }
+  else { enllac.style.display="none"; }
+
+  document.body.classList.add("mode-detall");
+  window.scrollTo(0,0);
+}
+function tancaDetall(){
+  document.body.classList.remove("mode-detall");
+}
+
+
+  actes.forEach(a=>{
+    const foto=a.imatge?`style="background-image:url('${urlImatge(a.imatge)}')"`:"";
+    const t=document.createElement("article");
+    t.className="targeta";
+    t.innerHTML=`
+      <div class="foto" ${foto}></div>
+      <div class="cos">
+        <div class="data">${fmtDataHora(a.data_inici, a.horari_text)}</div>
+        <h3>${a.nom||"Acte sense títol"}</h3>
+        ${a.subtitol?`<div class="subtit">${a.subtitol}</div>`:""}
+        <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
+      </div>`;
+    t.onclick=()=>obreDetall(a);
+    g.appendChild(t);
+  });
+}
+
+// ---- mapa ----
+function pintaMapa(actes){
+  if(!mapa){
+    mapa=L.map('mapa').setView([41.7,1.7],8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa);
+    capaMarcadors=L.layerGroup().addTo(mapa);
+  }
+  capaMarcadors.clearLayers();
+  actes.forEach(a=>{
+    if(a.latitud&&a.longitud){
+      L.marker([a.latitud,a.longitud]).addTo(capaMarcadors)
+        .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`);
+    }
+  });
+}
+
+// ---- interacció ----
+document.querySelectorAll(".toggle-mapa button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".toggle-mapa button").forEach(x=>x.classList.remove("actiu"));
+  b.classList.add("actiu");
+  document.querySelectorAll(".vista").forEach(v=>v.classList.remove("actiu"));
+  $("#v-"+b.dataset.vista).classList.add("actiu");
+  if(b.dataset.vista==="mapa"&&mapa) setTimeout(()=>mapa.invalidateSize(),100);
+});
+
+let temp;
+["#f-text","#f-comarca","#f-municipi","#f-desde","#f-fins"].forEach(s=>{
+  const el=$(s);const ev=(el.tagName==="INPUT"&&el.type==="text")?"input":"change";
+  el.addEventListener(ev,()=>{clearTimeout(temp);temp=setTimeout(carregaActes,350)});
+});
+
+$("#netejar").onclick=()=>{
+  $("#f-text").value="";$("#f-comarca").value="";$("#f-municipi").value="";
+  $("#f-desde").value="";$("#f-fins").value="";
+  seleccionades.clear();
+  document.querySelectorAll(".cat").forEach(c=>c.classList.remove("actiu"));
+  carregaActes();
+};
+
+$("#tornar-llista").onclick=tancaDetall;
+
+// ---- arrencada ----
+(async()=>{
+  await pintaCategories();
+  await carregaFiltres();
+  carregaActes();
+})();
+</script>
+</body>
+</html>
