@@ -12,34 +12,30 @@
 :root{
   --tinta:#16130f; --gris:#6b6359; --paper:#ffffff; --fons:#fafafa;
   --vora:#ececec; --ombra:rgba(0,0,0,.08);
-  /* colors intensos per categoria */
-  --c-esceniques:#e23b54;  /* vermell carmí */
-  --c-musicals:#f0820a;    /* taronja */
-  --c-plastiques:#1aa179;  /* verd maragda */
-  --c-popular:#d4264e;     /* magenta */
-  --c-literatura:#3257be;  /* blau */
-  --c-cinema:#7b3fe4;      /* violeta */
-  --c-formacio:#0f9bd1;    /* cian */
-  --c-altres:#5a6472;      /* grafit */
+  --c-esceniques:#e23b54;
+  --c-musicals:#f0820a;
+  --c-plastiques:#1aa179;
+  --c-popular:#d4264e;
+  --c-literatura:#3257be;
+  --c-cinema:#7b3fe4;
+  --c-formacio:#0f9bd1;
+  --c-altres:#5a6472;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--tinta);-webkit-font-smoothing:antialiased;line-height:1.5}
 
-/* ---------- capçalera ---------- */
 .capcalera{padding:3.2rem 1.5rem 1.5rem;text-align:center;max-width:1200px;margin:0 auto}
 .capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
 .capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.55em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
 .capcalera p{color:var(--gris);font-size:1.15rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500}
 
-/* ---------- estructura d'apartats ---------- */
 .bloc{max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem}
 .bloc-titol{display:flex;flex-direction:column;align-items:center;gap:.2rem;margin-bottom:1.1rem;text-align:center}
 .bloc-titol .n{font-family:'Cinzel',serif;font-weight:500;font-size:.95rem;color:var(--gris);letter-spacing:.15em}
 .bloc-titol h2{font-family:'Cinzel',serif;font-weight:700;font-size:1.9rem;letter-spacing:.08em;text-transform:uppercase}
 .bloc-titol .ajuda{font-size:.9rem;color:var(--gris);font-weight:400;font-family:'Cormorant Garamond',serif;font-style:italic}
 
-/* ---------- QUÈ: quadres de categoria (foto apaïsada, tota l'amplada) ---------- */
 .bloc-que{padding-bottom:.6rem}
 .categories{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;background:#fff;width:100%}
 @media(max-width:760px){.categories{grid-template-columns:1fr}}
@@ -60,7 +56,6 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .cat.actiu{box-shadow:inset 0 0 0 4px var(--tint,#000)}
 .cat.actiu .check{display:flex}
 
-/* ---------- QUAN: dates ---------- */
 .dates{display:flex;gap:1.4rem;flex-wrap:wrap;justify-content:center}
 .camp-data{display:flex;flex-direction:column;gap:.35rem;align-items:center}
 .camp-data label{font-size:.82rem;color:var(--gris);font-weight:500;text-transform:uppercase;letter-spacing:.06em;text-align:center}
@@ -68,7 +63,6 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
 .camp-data input:focus{outline:none;border-color:var(--c-literatura)}
 
-/* ---------- ON: lloc ---------- */
 .lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:center}
 .lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
   border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
@@ -78,13 +72,11 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--gris);transition:all .2s}
 .toggle-mapa button.actiu{background:var(--tinta);color:#fff}
 
-/* ---------- cerca de text ---------- */
 .cerca{max-width:1200px;margin:0 auto;padding:0 1.5rem}
 .cerca input{width:100%;font-family:'Outfit',sans-serif;font-size:1.05rem;padding:.85rem 1.1rem;
   border:1.5px solid var(--vora);border-radius:13px;background:var(--paper)}
 .cerca input:focus{outline:none;border-color:var(--c-musicals)}
 
-/* ---------- resultats ---------- */
 .barra-res{max-width:1200px;margin:1.2rem auto .4rem;padding:0 1.5rem;display:flex;align-items:baseline;gap:.6rem}
 .barra-res .compte{font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem}
 .barra-res .et{color:var(--gris);font-weight:300}
@@ -99,16 +91,12 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;cursor:pointer;display:flex;flex-direction:column;height:380px;
   box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.10), 0 14px 30px rgba(0,0,0,.08)}
 .targeta:hover{transform:translateY(-6px);box-shadow:0 4px 8px rgba(0,0,0,.08), 0 14px 28px rgba(0,0,0,.16), 0 26px 50px rgba(0,0,0,.12)}
-/* 3/5 imatge de l'acte */
 .targeta .foto{flex:3;background:var(--fons);background-size:cover;background-position:center}
-/* 2/5 text */
 .targeta .cos{flex:2;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
 .targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
-.targeta .subtit{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.98rem;color:var(--gris);line-height:1.2;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
 .estat{text-align:center;color:var(--gris);padding:3rem;font-weight:300}
@@ -165,12 +153,12 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 </div>
 <div class="vista" id="v-mapa"><div id="mapa"></div></div>
 
-<footer class="peu">Dades obertes de la Generalitat de Catalunya · Agenda Cultural</footer>
+<footer class="peu">Dades obertes de la Generalitat de Catalunya i l'Ajuntament de Barcelona · Agenda Cultural</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ---- CONFIGURACIÓ SUPABASE ----
+// ---- CONFIGURACIO SUPABASE ----
 const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -178,8 +166,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
 
-// ---- definició visual de les 8 categories ----
-// catBD = nom EXACTE a la base de dades · etiqueta = text del botó · sub = subtítol · img = fitxer
+// ---- definicio visual de les 8 categories ----
 const CATS = [
   {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · dansa · circ · màgia · titelles", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
   {catBD:"Arts musicals",   etiqueta:"Música",   sub:"clàssica · jazz · blues · rock · pop", color:"var(--c-musicals)", img:"imatges/musicals.jpg"},
@@ -190,23 +177,17 @@ const CATS = [
   {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
 ];
-const colorCat = {};        // nom BD -> color
-const imgCat = {};          // nom BD -> fitxer d'imatge de categoria
-const idCat = {};           // nom BD -> id (de la BD)
-const seleccionades = new Set();   // ids de categories premudes
+const colorCat = {};
+const imgCat = {};
+const seleccionades = new Set();   // noms de categoria premudes (text, no id)
 
 // ---- pintar els quadres de categoria ----
-async function pintaCategories(){
-  // agafar els ids reals de la BD
-  const {data} = await sb.from("categories").select("id,nom");
-  (data||[]).forEach(c=>idCat[c.nom]=c.id);
-
+function pintaCategories(){
   const cont = $("#categories");
   cont.innerHTML = "";
   CATS.forEach(c=>{
     colorCat[c.catBD]=c.color;
     imgCat[c.catBD]=c.img;
-    const id = idCat[c.catBD];
     const b = document.createElement("button");
     b.className="cat";
     b.style.setProperty("--tint", c.color);
@@ -215,29 +196,37 @@ async function pintaCategories(){
                 + (c.sub?`<div class="sub">${c.sub}</div>`:"")
                 + `</div><span class="check">✓</span>`;
     b.onclick = ()=>{
-      if(!id) return;
-      if(seleccionades.has(id)){seleccionades.delete(id);b.classList.remove("actiu")}
-      else{seleccionades.add(id);b.classList.add("actiu")}
+      if(seleccionades.has(c.catBD)){seleccionades.delete(c.catBD);b.classList.remove("actiu")}
+      else{seleccionades.add(c.catBD);b.classList.add("actiu")}
       carregaActes();
     };
     cont.appendChild(b);
   });
 }
 
-// ---- omplir comarca i municipi ----
+// ---- omplir comarca i municipi (a partir dels actes publicats) ----
 async function carregaFiltres(){
+  // municipis i comarques: els traiem de la taula municipis (per tenir noms oficials)
+  const {data: muns} = await sb.from("municipis").select("id,nom,comarca_id").order("nom");
   const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
+  window._municipis = muns || [];
+  window._comarques = coms || [];
   if(coms){
     coms.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(c=>{
       const o=document.createElement("option");o.value=c.id;o.textContent=c.nom;$("#f-comarca").appendChild(o);
     });
   }
-  const {data: muns} = await sb.from("municipis").select("id,nom").order("nom");
-  if(muns){
-    muns.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(m=>{
-      const o=document.createElement("option");o.value=m.id;o.textContent=m.nom;$("#f-municipi").appendChild(o);
-    });
-  }
+  omplirMunicipis("");
+}
+// omple municipis segons la comarca triada
+function omplirMunicipis(comarcaId){
+  const sel=$("#f-municipi");
+  sel.innerHTML='<option value="">Tots els municipis</option>';
+  let llista = window._municipis || [];
+  if(comarcaId) llista = llista.filter(m=>String(m.comarca_id)===String(comarcaId));
+  llista.sort((a,b)=>ordreCatala.compare(a.nom,b.nom)).forEach(m=>{
+    const o=document.createElement("option");o.value=m.id;o.textContent=m.nom;sel.appendChild(o);
+  });
 }
 
 // ---- utilitats ----
@@ -246,12 +235,8 @@ function fmtData(d){
   const x=new Date(d);
   return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
 }
-function nomMunicipi(a){return (a.municipis&&a.municipis.nom)?a.municipis.nom:""}
-
-// extreu l'hora del text de l'horari ("A les 18 h", "20.30 h"...) i la formata 20:00
 function fmtHora(horari){
   if(!horari) return "";
-  // busca un patró d'hora: 18, 18h, 18:30, 18.30, 20 h...
   const m = horari.match(/(\d{1,2})\s*[:.h]?\s*(\d{2})?/);
   if(!m) return "";
   let h = parseInt(m[1],10);
@@ -259,28 +244,25 @@ function fmtHora(horari){
   if(h<0||h>23) return "";
   return String(h).padStart(2,'0')+":"+min;
 }
-// data + hora: "dimecres, 4 de juny · 20:00"
 function fmtDataHora(d, horari){
   const data = fmtData(d);
   const hora = fmtHora(horari);
   return hora ? `${data} · ${hora}` : data;
 }
-
-// completa la URL de la imatge: les de la Gencat venen com a ruta relativa
-// (/content/dam/...) i cal afegir-hi el domini.
-function urlImatge(img){
-  if(!img) return "";
-  if(img.startsWith("http")) return img;          // ja és URL completa
-  if(img.startsWith("/")) return "https://agenda.cultura.gencat.cat" + img;
-  return "https://agenda.cultura.gencat.cat/" + img;
-}
+// nom municipi a partir del camp text de actes_publicada
+function nomMunicipi(a){ return a.municipi || ""; }
+// categories de l'acte (camp jsonb "categories")
 function categoriesActe(a){
   const c=new Set();
-  (a.acte_subcategories||[]).forEach(x=>{
-    if(x.subcategories&&x.subcategories.categories&&x.subcategories.categories.nom)
-      c.add(x.subcategories.categories.nom);
-  });
+  (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
+}
+// imatge: si en té, la seva; si no, la de la categoria (per als de Barcelona)
+function imatgeActe(a){
+  if(a.imatge) return a.imatge;
+  const cats=categoriesActe(a);
+  if(cats.length && imgCat[cats[0]]) return imgCat[cats[0]];
+  return "imatges/altres.jpg";
 }
 
 let mapa, capaMarcadors;
@@ -290,12 +272,6 @@ async function carregaActes(){
   $("#estat-llista").textContent="Carregant…";
 
   const cats = [...seleccionades];
-  // si hi ha categories seleccionades, fem el join INTERN cap a les subcategories
-  // (filtra dins la mateixa consulta, sense el límit de 1000 ids)
-  const sel = cats.length
-    ? "*, municipis(nom), acte_subcategories!inner(subcategories!inner(nom, categoria_id, categories(nom)))"
-    : "*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))";
-
   const text = $("#f-text").value.trim();
   const comarca = $("#f-comarca").value;
   const municipi = $("#f-municipi").value;
@@ -303,28 +279,29 @@ async function carregaActes(){
   const fins = $("#f-fins").value;
   const avui = new Date().toISOString().slice(0,10);
 
-  // construeix la consulta base amb tots els filtres (sense executar-la encara).
-  // es torna a cridar per a cada pàgina perquè cada .range() necessita una consulta nova.
   function fesConsulta(){
-    let q = sb.from("actes").select(sel).order("data_inici",{ascending:true});
+    let q = sb.from("actes_publicada").select("*").order("data_inici",{ascending:true});
     if(text){
-      const t = text.replaceAll(",", " ").trim();   // les comes trencarien el filtre .or
-      q = q.or(`nom.ilike.%${t}%,subtitol.ilike.%${t}%,descripcio.ilike.%${t}%,descripcio_net.ilike.%${t}%,artistes.ilike.%${t}%,lloc_nom.ilike.%${t}%,a_saber.ilike.%${t}%`);
+      const t = text.replaceAll(",", " ").trim();
+      q = q.or(`nom.ilike.%${t}%,descripcio_net.ilike.%${t}%,artistes.ilike.%${t}%,lloc_nom.ilike.%${t}%,a_saber.ilike.%${t}%`);
     }
     if(municipi) q = q.eq("municipi_id", municipi);
-    if(comarca) q = q.eq("comarca_id", comarca);
-    // data: si l'usuari no posa "des de", per defecte només d'avui en endavant
+    // comarca: filtrem pels municipis d'aquella comarca
+    if(comarca){
+      const ids = (window._municipis||[]).filter(m=>String(m.comarca_id)===String(comarca)).map(m=>m.id);
+      q = q.in("municipi_id", ids.length?ids:[-1]);
+    }
     q = q.gte("data_inici", desde || avui);
     if(fins) q = q.lte("data_inici", fins);
-    // filtre per categories: sobre la taula relacionada, dins la mateixa consulta
+    // categories: el camp jsonb conté parelles {categoria, subcategoria}.
+    // filtrem amb OR de "contains" per cada categoria seleccionada.
     if(cats.length){
-      q = q.in("acte_subcategories.subcategories.categoria_id", cats);
+      const ors = cats.map(c=>`categories.cs.${JSON.stringify([{categoria:c}])}`);
+      q = q.or(ors.join(","));
     }
     return q;
   }
 
-  // Supabase no torna més de 1000 files per consulta: demanem per pàgines
-  // de 1000 amb .range() i les ajuntem totes.
   let totes = [];
   let desdeFila = 0;
   const MIDA = 1000;
@@ -333,15 +310,12 @@ async function carregaActes(){
     if(error){$("#estat-llista").textContent="Error carregant les dades: "+error.message;return}
     if(!data || data.length===0) break;
     totes = totes.concat(data);
-    if(data.length < MIDA) break;     // ja no en queden més
+    if(data.length < MIDA) break;
     desdeFila += MIDA;
-    if(desdeFila > 20000) break;      // tall de seguretat
+    if(desdeFila > 20000) break;
   }
 
-  // amb !inner i diverses subcategories, un acte pot sortir repetit -> dedupliquem
-  const vistos = new Set();
-  const actes = totes.filter(a=>{ if(vistos.has(a.id))return false; vistos.add(a.id); return true; });
-
+  const actes = totes;
   $("#compte").textContent = actes.length;
   $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
   pintaLlista(actes);
@@ -353,15 +327,13 @@ async function carregaActes(){
 function pintaLlista(actes){
   const g=$("#graella");g.innerHTML="";
   actes.forEach(a=>{
-    const foto=a.imatge?`style="background-image:url('${urlImatge(a.imatge)}')"`:"";
     const t=document.createElement("article");
     t.className="targeta";
     t.innerHTML=`
-      <div class="foto" ${foto}></div>
+      <div class="foto" style="background-image:url('${imatgeActe(a)}')"></div>
       <div class="cos">
-        <div class="data">${fmtDataHora(a.data_inici, a.horari_text)}</div>
+        <div class="data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
-        ${a.subtitol?`<div class="subtit">${a.subtitol}</div>`:""}
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
       </div>`;
     t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
@@ -385,7 +357,7 @@ function pintaMapa(actes){
   });
 }
 
-// ---- interacció ----
+// ---- interaccio ----
 document.querySelectorAll(".toggle-mapa button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".toggle-mapa button").forEach(x=>x.classList.remove("actiu"));
   b.classList.add("actiu");
@@ -399,9 +371,11 @@ let temp;
   const el=$(s);const ev=(el.tagName==="INPUT"&&el.type==="text")?"input":"change";
   el.addEventListener(ev,()=>{clearTimeout(temp);temp=setTimeout(carregaActes,350)});
 });
+// en canviar la comarca, refresquem la llista de municipis
+$("#f-comarca").addEventListener("change",()=>omplirMunicipis($("#f-comarca").value));
 
 $("#netejar").onclick=()=>{
-  $("#f-text").value="";$("#f-comarca").value="";$("#f-municipi").value="";
+  $("#f-text").value="";$("#f-comarca").value="";omplirMunicipis("");$("#f-municipi").value="";
   $("#f-desde").value="";$("#f-fins").value="";
   seleccionades.clear();
   document.querySelectorAll(".cat").forEach(c=>c.classList.remove("actiu"));
@@ -410,7 +384,7 @@ $("#netejar").onclick=()=>{
 
 // ---- arrencada ----
 (async()=>{
-  await pintaCategories();
+  pintaCategories();
   await carregaFiltres();
   carregaActes();
 })();

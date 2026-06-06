@@ -24,7 +24,6 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   letter-spacing:.05em;font-size:.95rem}
 h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.15;
   margin:.5rem 0;letter-spacing:.02em}
-.d-subtitol{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.3rem;color:var(--gris);margin-bottom:1.2rem}
 .d-meta{display:flex;flex-wrap:wrap;gap:.6rem;margin:1.2rem 0}
 .chip{background:var(--fons);border:1px solid var(--vora);border-radius:30px;padding:.45rem .95rem;
   font-size:.88rem;font-weight:500;display:inline-flex;align-items:center;gap:.4rem}
@@ -53,12 +52,12 @@ const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-function urlImatge(img){
-  if(!img) return "";
-  if(img.startsWith("http")) return img;
-  if(img.startsWith("/")) return "https://agenda.cultura.gencat.cat" + img;
-  return "https://agenda.cultura.gencat.cat/" + img;
-}
+const IMG_CAT = {
+  "Arts escèniques":"imatges/esceniques.jpg","Arts musicals":"imatges/musicals.jpg",
+  "Arts plàstiques":"imatges/plastiques.jpg","Cultura popular":"imatges/popular.jpg",
+  "Literatura":"imatges/literatura.jpg","Cinema":"imatges/cinema.jpg",
+  "Formació":"imatges/formacio.jpg","Altres":"imatges/altres.jpg"
+};
 function fmtData(d){
   if(!d) return "Data per confirmar";
   return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
@@ -73,11 +72,14 @@ function fmtHora(h){
 function fmtDataHora(d,h){const data=fmtData(d);const hora=fmtHora(h);return hora?`${data} · ${hora}`:data;}
 function categoriesActe(a){
   const c=new Set();
-  (a.acte_subcategories||[]).forEach(x=>{
-    if(x.subcategories&&x.subcategories.categories&&x.subcategories.categories.nom)
-      c.add(x.subcategories.categories.nom);
-  });
+  (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
+}
+function imatgeActe(a){
+  if(a.imatge) return a.imatge;
+  const cats=categoriesActe(a);
+  if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
+  return "imatges/altres.jpg";
 }
 
 async function carrega(){
@@ -85,9 +87,7 @@ async function carrega(){
   const id = params.get("id");
   if(!id){ document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha indicat cap acte.</div>'; return; }
 
-  const {data, error} = await sb.from("actes")
-    .select("*, municipis(nom), acte_subcategories(subcategories(nom, categories(nom)))")
-    .eq("id", id).single();
+  const {data, error} = await sb.from("actes_publicada").select("*").eq("id", id).single();
 
   if(error || !data){
     document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha trobat l\'acte.</div>';
@@ -98,28 +98,28 @@ async function carrega(){
 
 function pinta(a){
   document.title = (a.nom||"Acte") + " · Agenda Cultural";
-  const lloc=[a.lloc_nom, (a.municipis&&a.municipis.nom)||""].filter(Boolean).join(", ");
+  const lloc=[a.lloc_nom, a.municipi||""].filter(Boolean).join(", ");
   const cats=categoriesActe(a);
 
   let meta="";
   if(lloc) meta+=`<span class="chip">📍 ${lloc}</span>`;
-  if(a.modalitat) meta+=`<span class="chip">${a.modalitat}</span>`;
   if(a.preu_gratuit===true) meta+=`<span class="chip gratis">Gratuït</span>`;
   else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
+  if(a.idioma) meta+=`<span class="chip">${a.idioma}</span>`;
+  if(a.public_desti) meta+=`<span class="chip">${a.public_desti}</span>`;
   if(cats.length) meta+=`<span class="chip">${cats.join(" · ")}</span>`;
 
-  const url = a.url_original;
+  const url = a.enllac;
   const enllacHtml = (url && url.startsWith("http"))
     ? `<a class="d-enllac" href="${url}" target="_blank" rel="noopener">Més informació i entrades</a>` : "";
 
   document.getElementById("contingut").innerHTML = `
-    ${a.imatge?`<div class="foto-gran" style="background-image:url('${urlImatge(a.imatge)}')"></div>`:""}
+    <div class="foto-gran" style="background-image:url('${imatgeActe(a)}')"></div>
     <div class="d-data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
     <h1>${a.nom||"Acte sense títol"}</h1>
-    ${a.subtitol?`<div class="d-subtitol">${a.subtitol}</div>`:""}
     <div class="d-meta">${meta}</div>
     ${a.artistes?`<div class="d-artistes">Amb: ${a.artistes}</div>`:""}
-    <div class="d-descripcio">${a.descripcio_net || a.descripcio || ""}</div>
+    <div class="d-descripcio">${a.descripcio_net || ""}</div>
     ${a.a_saber?`<div class="d-saber">${a.a_saber}</div>`:""}
     ${enllacHtml}
   `;
