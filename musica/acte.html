@@ -117,7 +117,7 @@ async function carrega(){
 }
 
 function pinta(a){
-  document.title = (a.nom||"Acte") + " · Agenda Cultural";
+  document.title = (a.nom||"Acte") + " · Agenda Musical";
   const lloc=[a.lloc_nom, a.municipi||""].filter(Boolean).join(", ");
   const cats=categoriesActe(a);
 
@@ -141,7 +141,11 @@ function pinta(a){
   else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
   if(a.idioma) meta+=`<span class="chip">${a.idioma}</span>`;
   if(a.public_desti) meta+=`<span class="chip">${a.public_desti}</span>`;
-  if(cats.length) meta+=`<span class="chip">${cats.join(" · ")}</span>`;
+  // en aquesta web de música mostrem els GÈNERES (subcategories), no "Arts musicals".
+  // si hi ha algun gènere concret, no mostrem "Altres" (queda més net).
+  let generes = subcatsMusicals(a);
+  if(generes.length > 1) generes = generes.filter(s => s !== "Altres");
+  if(generes.length) meta+=`<span class="chip">${generes.join(" · ")}</span>`;
 
   const url = a.enllac;
   const enllacHtml = (url && url.startsWith("http"))
