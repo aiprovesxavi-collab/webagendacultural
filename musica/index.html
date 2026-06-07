@@ -263,10 +263,25 @@ function categoriesActe(a){
   (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
 }
-// imatge: si en té, la seva; si no, una de música genèrica
+// subcategories musicals d'un acte (només les de "Arts musicals")
+function subcatsMusicals(a){
+  const s=new Set();
+  (a.categories||[]).forEach(x=>{
+    if(x && x.categoria==="Arts musicals" && x.subcategoria) s.add(x.subcategoria);
+  });
+  return [...s];
+}
+// quins gèneres (etiquetes dels botons) té un acte, segons les seves subcategories
+function generesActe(a){
+  const subs = subcatsMusicals(a);
+  return CATS.filter(c => c.subs.some(sub => subs.includes(sub)));
+}
+// imatge: si en té de pròpia, la seva; si no, la del seu gènere musical
 function imatgeActe(a){
   if(a.imatge) return a.imatge;
-  return "imatges/musicals.jpg";
+  const gens = generesActe(a);
+  if(gens.length) return gens[0].img;   // foto del primer gènere que tingui
+  return "imatges/musicals.jpg";          // música genèrica si no s'identifica el gènere
 }
 
 let mapa, capaMarcadors;
@@ -297,20 +312,11 @@ async function carregaActes(){
     q = q.gte("data_inici", desde || avui);
     if(fins) q = q.lte("data_inici", fins);
 
-    // AQUESTA WEB ÉS NOMÉS DE MÚSICA: sempre filtrem per "Arts musicals".
-    if(cats.length){
-      // si hi ha gèneres triats, filtrem per les seves subcategories concretes
-      const subsTriades = [];
-      cats.forEach(et=>{
-        const def = CATS.find(c=>c.etiqueta===et);
-        if(def) def.subs.forEach(s=>subsTriades.push(s));
-      });
-      const ors = subsTriades.map(s=>`categories.cs.${JSON.stringify([{categoria:"Arts musicals",subcategoria:s}])}`);
-      q = q.or(ors.join(","));
-    } else {
-      // cap gènere triat: tots els actes de música
-      q = q.contains("categories", JSON.stringify([{categoria:"Arts musicals"}]));
-    }
+    // AQUESTA WEB ÉS NOMÉS DE MÚSICA: demanem SEMPRE tots els actes de
+    // "Arts musicals" (sense filtrar gènere a l'URL, perquè caràcters com
+    // "&" de "R&B i Soul" trencarien la consulta). El filtre de gènere
+    // es fa després al navegador, que és fiable i ràpid.
+    q = q.contains("categories", JSON.stringify([{categoria:"Arts musicals"}]));
     return q;
   }
 
@@ -327,7 +333,18 @@ async function carregaActes(){
     if(desdeFila > 20000) break;
   }
 
-  const actes = totes;
+  // filtre de gènere AL NAVEGADOR: si hi ha gèneres triats, només els actes
+  // que tinguin alguna de les subcategories d'aquells gèneres.
+  let actes = totes;
+  if(cats.length){
+    const subsTriades = new Set();
+    cats.forEach(et=>{
+      const def = CATS.find(c=>c.etiqueta===et);
+      if(def) def.subs.forEach(s=>subsTriades.add(s));
+    });
+    actes = totes.filter(a => subcatsMusicals(a).some(s => subsTriades.has(s)));
+  }
+
   $("#compte").textContent = actes.length;
   $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
   pintaLlista(actes);

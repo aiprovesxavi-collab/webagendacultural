@@ -56,12 +56,6 @@ const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const IMG_CAT = {
-  "Arts escèniques":"imatges/esceniques.jpg","Arts musicals":"imatges/musicals.jpg",
-  "Arts plàstiques":"imatges/plastiques.jpg","Cultura popular":"imatges/popular.jpg",
-  "Literatura":"imatges/literatura.jpg","Cinema":"imatges/cinema.jpg",
-  "Formació":"imatges/formacio.jpg","Altres":"imatges/altres.jpg"
-};
 function fmtData(d){
   if(!d) return "Data per confirmar";
   return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
@@ -79,10 +73,32 @@ function categoriesActe(a){
   (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
 }
+const CATS = [
+  {etiqueta:"POP",              subs:["Pop"],                          img:"imatges/pop.jpg"},
+  {etiqueta:"ROCK",             subs:["Rock"],                         img:"imatges/rock.jpg"},
+  {etiqueta:"ELECTRÒNICA",      subs:["Electrònica"],                  img:"imatges/electronic2.jpg"},
+  {etiqueta:"BLUES",            subs:["Blues"],                        img:"imatges/blues.jpg"},
+  {etiqueta:"JAZZ",             subs:["Jazz"],                         img:"imatges/jazz.jpg"},
+  {etiqueta:"HIP-HOP I RAP",    subs:["Hip-hop i Rap"],                img:"imatges/hip2.jpg"},
+  {etiqueta:"R&B I SOUL",       subs:["R&B i Soul"],                   img:"imatges/r_b.jpg"},
+  {etiqueta:"FUNK",             subs:["Funk"],                         img:"imatges/funk2.jpg"},
+  {etiqueta:"REGGAE I SKA",     subs:["Reggae i Ska"],                 img:"imatges/reggaeton.jpg"},
+  {etiqueta:"COUNTRY I FOLK",   subs:["Country i Folk"],               img:"imatges/country.jpg"},
+  {etiqueta:"INDIE",            subs:["Indie","Cançó d'autor"],        img:"imatges/indie.jpg"},
+  {etiqueta:"MÚSIQUES DEL MÓN", subs:["Músiques del món","Havaneres"], img:"imatges/ethnic.jpg"},
+  {etiqueta:"CLÀSSICA",         subs:["Clàssica"],                     img:"imatges/classica.jpg"},
+  {etiqueta:"ALTRES",           subs:["Altres"],                       img:"imatges/altres.jpg"},
+];
+function subcatsMusicals(a){
+  const s=new Set();
+  (a.categories||[]).forEach(x=>{ if(x && x.categoria==="Arts musicals" && x.subcategoria) s.add(x.subcategoria); });
+  return [...s];
+}
 function imatgeActe(a){
   if(a.imatge) return a.imatge;
-  const cats=categoriesActe(a);
-  if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
+  const subs = subcatsMusicals(a);
+  const gen = CATS.find(c => c.subs.some(sub => subs.includes(sub)));
+  if(gen) return gen.img;
   return "imatges/musicals.jpg";
 }
 
