@@ -171,23 +171,22 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
 
-// ---- definició visual dels 14 gèneres musicals ----
+// ---- definició visual dels 13 gèneres musicals (taxonomia nova) ----
 // etiqueta = text del botó (MAJÚSCULES) · subs = subcategories de la BD que filtra · img = foto
 const CATS = [
-  {etiqueta:"POP",              subs:["Pop"],                         color:"var(--g-pop)",        img:"imatges/pop.jpg"},
-  {etiqueta:"ROCK",             subs:["Rock"],                        color:"var(--g-rock)",       img:"imatges/rock.jpg"},
-  {etiqueta:"ELECTRÒNICA",      subs:["Electrònica"],                 color:"var(--g-electronica)",img:"imatges/electronic2.jpg"},
-  {etiqueta:"BLUES",            subs:["Blues"],                       color:"var(--g-blues)",      img:"imatges/blues.jpg"},
-  {etiqueta:"JAZZ",             subs:["Jazz"],                        color:"var(--g-jazz)",       img:"imatges/jazz.jpg"},
-  {etiqueta:"HIP-HOP I RAP",    subs:["Hip-hop i Rap"],               color:"var(--g-hiphop)",     img:"imatges/hip2.jpg"},
-  {etiqueta:"R&B I SOUL",       subs:["R&B i Soul"],                  color:"var(--g-rnb)",        img:"imatges/r_b.jpg"},
-  {etiqueta:"FUNK",             subs:["Funk"],                        color:"var(--g-funk)",       img:"imatges/funk2.jpg"},
-  {etiqueta:"REGGAE I SKA",     subs:["Reggae i Ska"],                color:"var(--g-reggae)",     img:"imatges/reggaeton.jpg"},
-  {etiqueta:"COUNTRY I FOLK",   subs:["Country i Folk"],              color:"var(--g-country)",    img:"imatges/country.jpg"},
-  {etiqueta:"INDIE",            subs:["Indie","Cançó d'autor"],       color:"var(--g-indie)",      img:"imatges/indie.jpg"},
-  {etiqueta:"MÚSIQUES DEL MÓN", subs:["Músiques del món","Havaneres"],color:"var(--g-mon)",        img:"imatges/ethnic.jpg"},
-  {etiqueta:"CLÀSSICA",         subs:["Clàssica"],                    color:"var(--g-classica)",   img:"imatges/classica.jpg"},
-  {etiqueta:"ALTRES",           subs:["Altres"],                      color:"var(--g-altres)",     img:"imatges/altres.jpg"},
+  {etiqueta:"POP",                         subs:["Pop"],                         color:"var(--g-pop)",        img:"imatges/pop.jpg"},
+  {etiqueta:"ROCK",                        subs:["Rock"],                        color:"var(--g-rock)",       img:"imatges/rock.jpg"},
+  {etiqueta:"SOUL, FUNK I R&B",            subs:["Soul, Funk i R&B"],            color:"var(--g-funk)",       img:"imatges/funk2.jpg"},
+  {etiqueta:"JAZZ I BLUES",                subs:["Jazz i Blues"],                color:"var(--g-jazz)",       img:"imatges/jazz.jpg"},
+  {etiqueta:"ELECTRÒNICA",                 subs:["Electrònica"],                 color:"var(--g-electronica)",img:"imatges/electronic2.jpg"},
+  {etiqueta:"URBANA",                      subs:["Urbana"],                      color:"var(--g-hiphop)",     img:"imatges/hip2.jpg"},
+  {etiqueta:"MÚSICA LLATINA",              subs:["Música Llatina"],              color:"var(--g-mon)",        img:"imatges/llatina.jpg"},
+  {etiqueta:"FLAMENC I RUMBA",             subs:["Flamenc i Rumba"],             color:"var(--g-rock)",       img:"imatges/flamenc.jpg"},
+  {etiqueta:"MÚSICA TRADICIONAL CATALANA", subs:["Música Tradicional catalana"], color:"var(--g-country)",    img:"imatges/tradicional.jpg"},
+  {etiqueta:"FOLK I ARRELS",               subs:["Folk i Arrels"],               color:"var(--g-country)",    img:"imatges/country.jpg"},
+  {etiqueta:"MÚSIQUES DEL MÓN",            subs:["Músiques del Món"],            color:"var(--g-mon)",        img:"imatges/ethnic.jpg"},
+  {etiqueta:"CLÀSSICA",                    subs:["Clàssica"],                    color:"var(--g-classica)",   img:"imatges/classica.jpg"},
+  {etiqueta:"ALTRES",                      subs:["Altres"],                      color:"var(--g-altres)",     img:"imatges/altresmusica.jpg"},
 ];
 const seleccionades = new Set();   // etiquetes de gènere premudes
 
