@@ -28,6 +28,10 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
 .chip{background:var(--fons);border:1px solid var(--vora);border-radius:30px;padding:.45rem .95rem;
   font-size:.88rem;font-weight:500;display:inline-flex;align-items:center;gap:.4rem}
 .chip.gratis{background:#e9f9f0;border-color:#bfe9d2;color:#1aa179}
+.chip-mapa{text-decoration:none;color:var(--tinta);cursor:pointer;transition:all .2s}
+.chip-mapa:hover{border-color:var(--c-musicals);color:var(--c-musicals);background:#fff7ef}
+.chip-mapa .anar{color:var(--c-musicals);font-weight:600}
+.d-font{margin-top:1.6rem;padding-top:1rem;border-top:1px solid var(--vora);font-size:.85rem;color:var(--gris);font-weight:500}
 .d-artistes{font-family:'Outfit',sans-serif;font-size:.95rem;color:var(--tinta);font-weight:500;margin:.4rem 0}
 .d-descripcio{font-family:'Cormorant Garamond',serif;font-size:1.25rem;line-height:1.7;color:#2a2620;margin:1.4rem 0;white-space:pre-line}
 .d-saber{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.6;color:var(--gris);
@@ -101,8 +105,22 @@ function pinta(a){
   const lloc=[a.lloc_nom, a.municipi||""].filter(Boolean).join(", ");
   const cats=categoriesActe(a);
 
+  // ---- lloc clicable cap a Google Maps (com anar-hi) ----
+  // si tenim coordenades, fem servir la ruta amb destinació exacta;
+  // si no, cerquem el text del lloc + municipi a Google Maps.
+  let mapaUrl = "";
+  if(a.latitud && a.longitud){
+    mapaUrl = `https://www.google.com/maps/dir/?api=1&destination=${a.latitud},${a.longitud}`;
+  } else if(lloc){
+    mapaUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent([a.lloc_nom,a.adreca,a.municipi].filter(Boolean).join(", "))}`;
+  }
+
   let meta="";
-  if(lloc) meta+=`<span class="chip">📍 ${lloc}</span>`;
+  if(lloc){
+    meta += mapaUrl
+      ? `<a class="chip chip-mapa" href="${mapaUrl}" target="_blank" rel="noopener" title="Com arribar-hi">📍 ${lloc} <span class="anar">· com anar-hi ↗</span></a>`
+      : `<span class="chip">📍 ${lloc}</span>`;
+  }
   if(a.preu_gratuit===true) meta+=`<span class="chip gratis">Gratuït</span>`;
   else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
   if(a.idioma) meta+=`<span class="chip">${a.idioma}</span>`;
@@ -113,6 +131,11 @@ function pinta(a){
   const enllacHtml = (url && url.startsWith("http"))
     ? `<a class="d-enllac" href="${url}" target="_blank" rel="noopener">Més informació i entrades</a>` : "";
 
+  // ---- font de l'acte (d'on prové la informació) ----
+  const fonts = Array.isArray(a.fonts) ? a.fonts : [];
+  const fontHtml = fonts.length
+    ? `<div class="d-font">Font: ${fonts.join(" · ")}</div>` : "";
+
   document.getElementById("contingut").innerHTML = `
     <div class="foto-gran" style="background-image:url('${imatgeActe(a)}')"></div>
     <div class="d-data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
@@ -122,6 +145,7 @@ function pinta(a){
     <div class="d-descripcio">${a.descripcio_net || ""}</div>
     ${a.a_saber?`<div class="d-saber">${a.a_saber}</div>`:""}
     ${enllacHtml}
+    ${fontHtml}
   `;
 }
 
