@@ -31,6 +31,9 @@ html{scroll-behavior:smooth}
 body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var(--tinta);-webkit-font-smoothing:antialiased;line-height:1.5}
 
 .capcalera{padding:3.2rem 1.5rem 1.5rem;text-align:center;max-width:1200px;margin:0 auto}
+.logo{position:absolute;top:1rem;left:1.2rem;z-index:10;display:inline-block}
+.logo img{height:64px;width:auto;display:block}
+@media(max-width:600px){.logo img{height:48px}}
 .capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
 .capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.55em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
 .capcalera p{color:var(--gris);font-size:1.15rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500}
@@ -110,6 +113,8 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 </head>
 <body>
 
+<a class="logo" href="index.html"><img src="imatges/logo.png" alt="FEM - Agenda Cultural de Catalunya"></a>
+
 <header class="capcalera">
   <h1>Agenda Musical <em>de Catalunya</em></h1>
   <p>Tota la música en directe, per gèneres</p>
@@ -174,19 +179,19 @@ const ordreCatala = new Intl.Collator('ca');
 // ---- definició visual dels 13 gèneres musicals (taxonomia nova) ----
 // etiqueta = text del botó (MAJÚSCULES) · subs = subcategories de la BD que filtra · img = foto
 const CATS = [
-  {etiqueta:"POP",                         subs:["Pop"],                         color:"var(--g-pop)",        img:"imatges/pop.jpg"},
-  {etiqueta:"ROCK",                        subs:["Rock"],                        color:"var(--g-rock)",       img:"imatges/rock.jpg"},
-  {etiqueta:"SOUL, FUNK I R&B",            subs:["Soul, Funk i R&B"],            color:"var(--g-funk)",       img:"imatges/funk2.jpg"},
-  {etiqueta:"JAZZ I BLUES",                subs:["Jazz i Blues"],                color:"var(--g-jazz)",       img:"imatges/jazz.jpg"},
-  {etiqueta:"ELECTRÒNICA",                 subs:["Electrònica"],                 color:"var(--g-electronica)",img:"imatges/electronic2.jpg"},
-  {etiqueta:"URBANA",                      subs:["Urbana"],                      color:"var(--g-hiphop)",     img:"imatges/hip2.jpg"},
-  {etiqueta:"MÚSICA LLATINA",              subs:["Música Llatina"],              color:"var(--g-mon)",        img:"imatges/llatina.jpg"},
-  {etiqueta:"FLAMENC I RUMBA",             subs:["Flamenc i Rumba"],             color:"var(--g-rock)",       img:"imatges/flamenc.jpg"},
-  {etiqueta:"MÚSICA TRADICIONAL CATALANA", subs:["Música Tradicional catalana"], color:"var(--g-country)",    img:"imatges/tradicional.jpg"},
-  {etiqueta:"FOLK I ARRELS",               subs:["Folk i Arrels"],               color:"var(--g-country)",    img:"imatges/country.jpg"},
-  {etiqueta:"MÚSIQUES DEL MÓN",            subs:["Músiques del Món"],            color:"var(--g-mon)",        img:"imatges/ethnic.jpg"},
-  {etiqueta:"CLÀSSICA",                    subs:["Clàssica"],                    color:"var(--g-classica)",   img:"imatges/classica.jpg"},
-  {etiqueta:"ALTRES",                      subs:["Altres"],                      color:"var(--g-altres)",     img:"imatges/altresmusica.jpg"},
+  {etiqueta:"POP",                         sub:"",                                       subs:["Pop"],                         color:"var(--g-pop)",        img:"imatges/pop.jpg"},
+  {etiqueta:"ROCK",                        sub:"hard rock · heavy · punk",               subs:["Rock"],                        color:"var(--g-rock)",       img:"imatges/rock.jpg"},
+  {etiqueta:"SOUL, FUNK I R&B",            sub:"soul · funk · gospel",                   subs:["Soul, Funk i R&B"],            color:"var(--g-funk)",       img:"imatges/funk2.jpg"},
+  {etiqueta:"JAZZ I BLUES",                sub:"swing · dixieland",                      subs:["Jazz i Blues"],                color:"var(--g-jazz)",       img:"imatges/jazz.jpg"},
+  {etiqueta:"ELECTRÒNICA",                 sub:"house · techno",                         subs:["Electrònica"],                 color:"var(--g-electronica)",img:"imatges/electronic2.jpg"},
+  {etiqueta:"URBANA",                      sub:"rap · hip-hop · trap · reggaeton",       subs:["Urbana"],                      color:"var(--g-hiphop)",     img:"imatges/hip2.jpg"},
+  {etiqueta:"MÚSICA LLATINA",              sub:"salsa · bachata · merengue · cúmbia",    subs:["Música Llatina"],              color:"var(--g-mon)",        img:"imatges/llatina.jpg"},
+  {etiqueta:"FLAMENC I RUMBA",             sub:"flamenc · rumba",                        subs:["Flamenc i Rumba"],             color:"var(--g-rock)",       img:"imatges/flamenc.jpg"},
+  {etiqueta:"MÚSICA TRADICIONAL CATALANA", sub:"sardanes · cobla · havaneres",           subs:["Música Tradicional catalana"], color:"var(--g-country)",    img:"imatges/tradicional.jpg"},
+  {etiqueta:"FOLK I ARRELS",               sub:"folk · country · bluegrass · celta",     subs:["Folk i Arrels"],               color:"var(--g-country)",    img:"imatges/country.jpg"},
+  {etiqueta:"MÚSIQUES DEL MÓN",            sub:"africana · àrab · balcànica",            subs:["Músiques del Món"],            color:"var(--g-mon)",        img:"imatges/ethnic.jpg"},
+  {etiqueta:"CLÀSSICA",                    sub:"barroca · òpera · cambra · simfònica",   subs:["Clàssica"],                    color:"var(--g-classica)",   img:"imatges/classica.jpg"},
+  {etiqueta:"ALTRES",                      sub:"",                                       subs:["Altres"],                      color:"var(--g-altres)",     img:"imatges/altresmusica.jpg"},
 ];
 const seleccionades = new Set();   // etiquetes de gènere premudes
 
@@ -199,7 +204,9 @@ function pintaCategories(){
     b.className="cat";
     b.style.setProperty("--tint", c.color);
     b.style.backgroundImage = `url('${c.img}')`;
-    b.innerHTML = `<div class="txt"><div class="nom">${c.etiqueta}</div></div><span class="check">✓</span>`;
+    b.innerHTML = `<div class="txt"><div class="nom">${c.etiqueta}</div>`
+                + (c.sub?`<div class="sub">${c.sub}</div>`:"")
+                + `</div><span class="check">✓</span>`;
     b.onclick = ()=>{
       if(seleccionades.has(c.etiqueta)){seleccionades.delete(c.etiqueta);b.classList.remove("actiu")}
       else{seleccionades.add(c.etiqueta);b.classList.add("actiu")}
