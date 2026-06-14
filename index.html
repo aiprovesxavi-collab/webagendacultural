@@ -139,6 +139,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 #mapacat.te-seleccio .cm{opacity:.30}
 #mapacat.te-seleccio .cm.sel{opacity:1}
 #mapacat .cm.sel{stroke:#222;stroke-width:2.2}
+#mapa-comarques .cm-nom{margin-top:8px;text-align:center;font-weight:600;letter-spacing:.04em;text-transform:uppercase;min-height:1.3em;color:#333;font-size:.95rem}
 </style>
 <!-- ON -->
 <section class="bloc">
@@ -192,6 +193,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <path class="cm" data-nom="Terra Alta" fill="#f6c156" d="M65.5,700.4 85.7,691.4 94.1,697.5 94.3,701.5 106.2,704.9 108.4,714.7 104.2,728.2 124.8,738.4 114.4,756.1 107.7,761.5 116.4,761.8 116.7,764.8 121.9,766.5 123.5,772.9 130.2,780.2 119.5,787.4 109.8,790.3 103.3,798.1 93.4,797.3 90.1,803.5 74.1,807.1 72.1,811.4 66.8,812.2 64.4,827.0 66.0,829.3 65.5,836.4 54.2,852.8 46.3,857.5 41.8,866.0 35.6,864.9 38.1,864.3 32.3,857.6 28.9,849.3 30.4,841.6 25.1,837.3 28.6,832.5 29.7,828.1 28.1,826.6 30.1,825.6 30.2,821.6 35.6,816.6 35.5,811.5 42.4,800.7 38.6,799.2 38.5,793.6 34.5,788.9 36.3,785.2 31.4,782.0 38.0,779.6 27.4,770.7 26.1,773.6 23.0,773.4 23.3,768.2 18.4,769.7 22.5,764.8 18.5,761.2 19.7,757.3 17.6,755.4 19.5,753.2 13.1,752.2 13.0,744.9 15.7,738.7 13.1,734.8 19.1,732.1 17.2,730.1 28.0,733.1 30.6,727.3 29.6,724.6 35.9,725.2 45.5,718.6 51.5,692.8 54.6,693.8 57.2,690.4 64.0,692.6 65.9,687.2 70.4,688.5 67.2,690.9 65.5,700.4Z"></path>
 <path class="cm" data-nom="Moianès" fill="#ee9d63" d="M625.3,401.5 627.4,406.5 626.0,412.0 620.8,413.4 623.5,416.4 622.5,420.4 625.0,424.7 628.2,427.2 631.7,425.4 638.0,427.4 640.8,424.2 644.0,434.1 641.1,445.2 637.5,450.0 641.0,454.6 641.9,469.8 640.4,473.8 641.9,478.1 649.4,480.6 656.7,478.2 659.0,480.5 657.4,482.4 658.0,489.5 649.5,490.0 648.8,487.0 643.9,488.9 640.9,484.1 635.8,486.8 616.8,484.5 609.5,488.5 593.3,484.7 589.2,488.6 586.5,480.2 583.2,479.6 582.6,473.4 575.4,469.4 559.1,472.7 555.5,467.7 555.7,461.9 551.5,460.5 594.0,447.0 590.2,440.8 585.5,440.2 582.9,435.5 573.7,431.9 576.8,426.0 586.9,418.5 582.4,414.6 586.4,413.4 585.8,402.0 596.5,408.0 605.3,407.1 610.8,403.3 610.9,405.2 615.4,405.7 625.3,401.5Z"></path>
 </svg>
+      <div id="cm-nom" class="cm-nom"></div>
     </div>
     <div class="toggle-mapa">
       <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
@@ -326,12 +328,10 @@ async function carregaActes(){
       const t = text.replaceAll(",", " ").trim();
       q = q.or(`nom.ilike.%${t}%,descripcio_net.ilike.%${t}%,artistes.ilike.%${t}%,lloc_nom.ilike.%${t}%,a_saber.ilike.%${t}%`);
     }
-    // filtre per comarques seleccionades al mapa (una o més)
+    // filtre per comarques seleccionades al mapa (ids de la taula comarques)
     if(comarquesSel.size){
-      const idsCom = new Set((window._comarques||[])
-        .filter(c=>comarquesSel.has(normNom(c.nom))).map(c=>String(c.id)));
       const idsMun = (window._municipis||[])
-        .filter(m=>idsCom.has(String(m.comarca_id))).map(m=>m.id);
+        .filter(m=>comarquesSel.has(String(m.comarca_id))).map(m=>m.id);
       q = q.in("municipi_id", idsMun.length?idsMun:[-1]);
     }
     // Mostra els actes ENCARA ACTIUS: que acaben avui o més tard, o (si no
@@ -428,11 +428,24 @@ $("#netejar").onclick=()=>{
   carregaActes();
 };
 
-// ---- filtre per comarques (mapa clicable) ----
-const comarquesSel = new Set();   // noms normalitzats de comarca seleccionats
+// ---- filtre per comarques (mapa clicable, noms de la taula comarques) ----
+const comarquesSel = new Set();   // ids de comarca (taula comarques) seleccionats
 function normNom(s){
   return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
     .replace(/[^a-z0-9]+/g," ").trim().replace(/\s+/g," ");
+}
+function trobaComarca(nomMapa){
+  const n=normNom(nomMapa), coms=window._comarques||[];
+  let c=coms.find(x=>normNom(x.nom)===n);
+  if(!c) c=coms.find(x=>{const xn=normNom(x.nom);return xn.includes(n)||n.includes(xn);});
+  return c||null;
+}
+function etiquetaMapa(){
+  const el=document.getElementById("cm-nom"); if(!el) return;
+  if(comarquesSel.size){
+    const noms=[...document.querySelectorAll("#mapacat .cm.sel")].map(p=>p.dataset.comnom||p.dataset.nom);
+    el.textContent=noms.sort().join(" · ");
+  } else el.textContent="";
 }
 function actualitzaDimMapa(){
   const svg=document.getElementById("mapacat");
@@ -442,19 +455,28 @@ function initMapaComarques(){
   const svg=document.getElementById("mapacat");
   if(!svg) return;
   svg.querySelectorAll(".cm").forEach(p=>{
+    const c=trobaComarca(p.dataset.nom);
+    if(c){ p.dataset.comid=c.id; p.dataset.comnom=c.nom; }
+    else { console.warn("Comarca del mapa sense equivalent a la BD:", p.dataset.nom); }
+    p.addEventListener("mouseenter",()=>{
+      const el=document.getElementById("cm-nom");
+      if(el) el.textContent=p.dataset.comnom||p.dataset.nom;
+    });
+    p.addEventListener("mouseleave", etiquetaMapa);
     p.addEventListener("click",()=>{
-      const n=normNom(p.dataset.nom);
-      if(comarquesSel.has(n)){ comarquesSel.delete(n); p.classList.remove("sel"); }
-      else { comarquesSel.add(n); p.classList.add("sel"); }
-      actualitzaDimMapa();
-      carregaActes();
+      if(!p.dataset.comid) return;   // sense equivalent a la BD: no filtra
+      const id=p.dataset.comid;
+      if(comarquesSel.has(id)){ comarquesSel.delete(id); p.classList.remove("sel"); }
+      else { comarquesSel.add(id); p.classList.add("sel"); }
+      actualitzaDimMapa(); etiquetaMapa(); carregaActes();
     });
   });
+  etiquetaMapa();
 }
 function esborraComarques(){
   comarquesSel.clear();
   document.querySelectorAll("#mapacat .cm.sel").forEach(p=>p.classList.remove("sel"));
-  actualitzaDimMapa();
+  actualitzaDimMapa(); etiquetaMapa();
 }
 document.addEventListener("click",e=>{
   if(e.target && e.target.id==="netcomarques"){ esborraComarques(); carregaActes(); }
