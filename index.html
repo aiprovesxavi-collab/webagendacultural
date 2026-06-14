@@ -427,19 +427,41 @@ function pintaLlista(actes){
 }
 
 // ---- mapa ----
+// treu [lat,lng] d'un acte provant diversos noms de camp possibles
+function coordsActe(a){
+  const num=v=>{const n=parseFloat(v);return isFinite(n)?n:null;};
+  let lat=num(a.latitud)??num(a.lat)??num(a.latitude);
+  let lng=num(a.longitud)??num(a.lng)??num(a.lon)??num(a.longitude);
+  if(lat==null||lng==null){
+    // de vegades ve un sol camp "lat,lng" (p.ex. localitzacio)
+    const s=a.localitzacio||a.coord||a.coordenades||a.geo||"";
+    const m=String(s).match(/(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+    if(m){ lat=parseFloat(m[1]); lng=parseFloat(m[2]); }
+  }
+  if(lat==null||lng==null) return null;
+  // a Catalunya lat≈40-43, lng≈0-3.5; si vénen capgirats, els intercanviem
+  if(lat>0&&lat<5&&lng>38&&lng<44){ const t=lat;lat=lng;lng=t; }
+  return [lat,lng];
+}
 function pintaMapa(actes){
   if(!mapa){
-    mapa=L.map('mapa').setView([41.7,1.7],8);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(mapa);
+    mapa=L.map('mapa').setView([41.75,1.8],8);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      {subdomains:'abcd',maxZoom:20,attribution:'© OpenStreetMap © CARTO'}).addTo(mapa);
     capaMarcadors=L.layerGroup().addTo(mapa);
   }
   capaMarcadors.clearLayers();
+  const punts=[];
   actes.forEach(a=>{
-    if(a.latitud&&a.longitud){
-      L.marker([a.latitud,a.longitud]).addTo(capaMarcadors)
+    const c=coordsActe(a);
+    if(c){
+      L.marker(c).addTo(capaMarcadors)
         .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`);
+      punts.push(c);
     }
   });
+  console.log(`Mapa: ${punts.length} actes amb coordenades de ${actes.length}`);
+  if(punts.length) mapa.fitBounds(punts,{padding:[30,30],maxZoom:12});
 }
 
 // ---- interaccio ----
