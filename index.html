@@ -291,7 +291,11 @@ async function carregaActes(){
       const ids = (window._municipis||[]).filter(m=>String(m.comarca_id)===String(comarca)).map(m=>m.id);
       q = q.in("municipi_id", ids.length?ids:[-1]);
     }
-    q = q.gte("data_inici", desde || avui);
+    // Mostra els actes ENCARA ACTIUS: que acaben avui o més tard, o (si no
+    // tenen data de fi) que comencen avui o més tard. Així s'inclouen també
+    // els que ja han començat però encara no s'han acabat (p.ex. exposicions).
+    const dataMin = desde || avui;
+    q = q.or(`data_fi.gte.${dataMin},and(data_fi.is.null,data_inici.gte.${dataMin})`);
     if(fins) q = q.lte("data_inici", fins);
     // categories: el camp jsonb conté parelles {categoria, subcategoria}.
     // filtrem amb OR de "contains" per cada categoria seleccionada.
@@ -312,7 +316,7 @@ async function carregaActes(){
     totes = totes.concat(data);
     if(data.length < MIDA) break;
     desdeFila += MIDA;
-    if(desdeFila > 20000) break;
+    if(desdeFila > 200000) break;
   }
 
   const actes = totes;
