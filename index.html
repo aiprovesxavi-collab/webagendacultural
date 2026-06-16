@@ -63,14 +63,12 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
 .camp-data input:focus{outline:none;border-color:var(--c-literatura)}
 
-/* ---- fila Quan: tres botons de temps a l'esquerra + dates apilades a la dreta ---- */
-/* Alçada de referència = 60% de l'alçada d'un botó de categoria.
-   Un botó de categoria fa ~150px d'alt (meitat del bloc d'ample, proporció 1080/270),
-   així que el 60% ≈ 90px. Fixem l'alçada directament perquè no depengui de l'ample. */
-.quan-fila{display:flex;align-items:stretch;gap:1.2rem;--h-temps:90px}
-.temps-botons{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+/* ---- secció Quan: tres botons de temps centrats a dalt + dates a sota en una línia ---- */
+/* Alçada de referència = 60% de l'alçada d'un botó de categoria (~90px). */
+.temps-botons{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.3rem;--h-temps:90px}
 .temps{position:relative;overflow:hidden;cursor:pointer;border:none;height:var(--h-temps);
-  display:flex;align-items:center;justify-content:center;text-align:center;
+  flex:1 1 0;max-width:340px;min-width:180px;
+  display:flex;align-items:center;justify-content:center;text-align:center;border-radius:4px;
   background-size:cover;background-position:center;background-color:#3a4a24;
   transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
 .temps::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.42);transition:background .3s}
@@ -80,15 +78,9 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   text-shadow:0 2px 12px rgba(0,0,0,.5)}
 .temps.actiu::after{background:color-mix(in srgb, var(--c-musicals) 55%, rgba(0,0,0,.45))}
 .temps.actiu{box-shadow:inset 0 0 0 4px var(--c-musicals)}
-.dates-dreta{display:flex;flex-direction:column;gap:.5rem;justify-content:space-between;flex-shrink:0;height:var(--h-temps)}
-.dates-dreta .camp-data{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:stretch;gap:.2rem}
-.dates-dreta .camp-data label{text-align:center}
-.dates-dreta .camp-data input{text-align:center}
 @media(max-width:760px){
-  .quan-fila{flex-direction:column;gap:.8rem;--h-temps:64px}
+  .temps-botons{--h-temps:64px;gap:.6rem}
   .temps .nom{font-size:clamp(.85rem,4vw,1.3rem);letter-spacing:.06em}
-  .dates-dreta{flex-direction:row;flex-wrap:wrap;justify-content:center;height:auto}
-  .dates-dreta .camp-data{flex:1 1 40%}
 }
 
 .lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:center}
@@ -151,16 +143,14 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <!-- QUAN -->
 <section class="bloc">
   <div class="bloc-titol"><h2>Quan</h2></div>
-  <div class="quan-fila">
-    <div class="temps-botons">
-      <button type="button" class="temps" data-temps="avui" style="background-image:url('avui.jpeg')"><span class="nom">Avui</span></button>
-      <button type="button" class="temps" data-temps="dema" style="background-image:url('dema.jpeg')"><span class="nom">Demà</span></button>
-      <button type="button" class="temps" data-temps="setmana" style="background-image:url('setmana.jpeg')"><span class="nom">Fins diumenge</span></button>
-    </div>
-    <div class="dates-dreta">
-      <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
-      <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
-    </div>
+  <div class="temps-botons">
+    <button type="button" class="temps" data-temps="avui" style="background-image:url('avui.jpeg')"><span class="nom">Avui</span></button>
+    <button type="button" class="temps" data-temps="dema" style="background-image:url('dema.jpeg')"><span class="nom">Demà</span></button>
+    <button type="button" class="temps" data-temps="setmana" style="background-image:url('setmana.jpeg')"><span class="nom">Fins diumenge</span></button>
+  </div>
+  <div class="dates">
+    <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
+    <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
   </div>
 </section>
 
