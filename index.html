@@ -115,7 +115,10 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .targeta .cos{flex:2;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
 .targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
-  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.targeta .detall{font-size:.84rem;color:var(--tinta);line-height:1.3;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.targeta .detall .preu{color:var(--c-esceniques);font-weight:600;white-space:nowrap}
 .targeta .lloc{font-size:.86rem;color:var(--gris);margin-top:auto}
 
 #mapa{height:560px;border-radius:16px;border:1px solid var(--vora)}
@@ -365,6 +368,36 @@ function categoriesActe(a){
   (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
 }
+// preu net: "Gratuït" si ho és, si no el text del preu (o null si no se sap)
+function preuActe(a){
+  if(a.preu_gratuit===true) return "Gratuït";
+  const p=(a.preu||"").toString().trim();
+  if(!p) return null;
+  if(/^(0|0[.,]0+|gratu)/i.test(p)) return "Gratuït";
+  return p;
+}
+// informació complementària per a la targeta, en cascada segons què hi hagi:
+// 1) artistes (+ preu)  2) categoria  3) públic destinatari  4) tros de descripció
+function detallActe(a){
+  const artistes=(a.artistes||"").toString().trim();
+  const preu=preuActe(a);
+  if(artistes){
+    return {txt: artistes, extra: preu};
+  }
+  const cats=categoriesActe(a);
+  if(cats.length){
+    return {txt: cats.join(" · "), extra: preu};
+  }
+  const pub=(a.public_desti||"").toString().trim();
+  if(pub){
+    return {txt: pub, extra: preu};
+  }
+  const desc=(a.descripcio_net||"").toString().trim();
+  if(desc){
+    return {txt: desc, extra: null};
+  }
+  return {txt: null, extra: preu};
+}
 // imatge: si en té, la seva; si no, la de la categoria (per als de Barcelona)
 function imatgeActe(a){
   if(a.imatge) return a.imatge;
@@ -439,11 +472,16 @@ function pintaLlista(actes){
   actes.forEach(a=>{
     const t=document.createElement("article");
     t.className="targeta";
+    const d = detallActe(a);
+    const detallHtml = d.txt
+      ? `<div class="detall">${d.txt}${d.extra?` <span class="preu">· ${d.extra}</span>`:""}</div>`
+      : (d.extra?`<div class="detall"><span class="preu">${d.extra}</span></div>`:"");
     t.innerHTML=`
       <div class="foto" style="background-image:url('${imatgeActe(a)}')"></div>
       <div class="cos">
         <div class="data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
+        ${detallHtml}
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
       </div>`;
     t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
