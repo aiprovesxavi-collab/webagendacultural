@@ -120,10 +120,9 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .detall .preu{color:#1f6feb;font-weight:700;white-space:nowrap}
 .targeta .detall .preu.gratis{color:#1a9e54;font-weight:700}
-.targeta .desc{position:relative;flex:1;min-height:0;overflow:hidden;
-  font-size:.95rem;color:var(--gris);line-height:1.4;font-family:'Cormorant Garamond',serif}
-.targeta .desc::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1.6em;
-  background:linear-gradient(to bottom, transparent, var(--paper))}
+.targeta .desc{flex:1;min-height:0;overflow:hidden;
+  font-size:.95rem;color:var(--gris);line-height:1.4;font-family:'Cormorant Garamond',serif;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
 .targeta .desc-buit{flex:1;min-height:0}
 .targeta .lloc{font-size:.86rem;color:var(--gris);flex-shrink:0;padding-top:.35rem}
 
@@ -499,7 +498,30 @@ function pintaLlista(actes){
     t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
     g.appendChild(t);
   });
+  ajustaDescripcions();
 }
+
+// Ajusta el nombre de línies de cada .desc perquè ompli l'espai lliure que queda
+// entre el detall i el lloc, amb punts suspensius reals i línies senceres.
+function ajustaDescripcions(){
+  requestAnimationFrame(()=>{
+    document.querySelectorAll(".targeta .desc").forEach(desc=>{
+      const cos=desc.parentElement;
+      const lloc=cos.querySelector(".lloc");
+      // espai vertical disponible per a la descripció dins el cos
+      let ocupat=0;
+      [...cos.children].forEach(ch=>{ if(ch!==desc) ocupat+=ch.offsetHeight; });
+      const estilCos=getComputedStyle(cos);
+      const gap=parseFloat(estilCos.rowGap||estilCos.gap||0)||0;
+      const padding=parseFloat(estilCos.paddingTop)+parseFloat(estilCos.paddingBottom);
+      const total=cos.clientHeight-padding-ocupat-gap*(cos.children.length-1);
+      const lh=parseFloat(getComputedStyle(desc).lineHeight)||18;
+      const linies=Math.max(1, Math.floor(total/lh));
+      desc.style.webkitLineClamp=String(linies);
+    });
+  });
+}
+window.addEventListener("resize", ()=>{ clearTimeout(window._rd); window._rd=setTimeout(ajustaDescripcions,200); });
 
 // ---- mapa ----
 // treu [lat,lng] d'un acte provant diversos noms de camp possibles
