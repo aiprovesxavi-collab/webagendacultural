@@ -63,6 +63,30 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   border-radius:11px;background:var(--paper);color:var(--tinta);transition:border-color .2s}
 .camp-data input:focus{outline:none;border-color:var(--c-literatura)}
 
+/* ---- fila Quan: tres botons de temps a l'esquerra + dates apilades a la dreta ---- */
+.quan-fila{display:flex;align-items:stretch;gap:1.2rem}
+.temps-botons{flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:2px}
+.temps{position:relative;overflow:hidden;cursor:pointer;border:none;
+  /* meitat d'alçada i un terç d'amplada d'un botó de categoria: aspect-ratio triplicat en ample i doblat en alt -> 1080/270 * (3 ample / 0.5 alt) = 1080/45 */
+  aspect-ratio:1080/135;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  background-size:cover;background-position:center;background-color:#3a4a24;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.temps::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.42);transition:background .3s}
+.temps:hover::after{background:rgba(0,0,0,.26)}
+.temps .nom{position:relative;z-index:2;color:#fff;font-family:'Cinzel',serif;font-weight:600;
+  font-size:clamp(1.4rem,3vw,2.4rem);letter-spacing:.18em;text-transform:uppercase;line-height:1.1;
+  text-shadow:0 2px 12px rgba(0,0,0,.5)}
+.temps.actiu::after{background:color-mix(in srgb, var(--c-musicals) 55%, rgba(0,0,0,.45))}
+.temps.actiu{box-shadow:inset 0 0 0 4px var(--c-musicals)}
+.dates-dreta{display:flex;flex-direction:column;gap:.5rem;justify-content:center;flex-shrink:0}
+.dates-dreta .camp-data{align-items:flex-start}
+@media(max-width:760px){
+  .quan-fila{flex-direction:column;gap:.8rem}
+  .temps .nom{font-size:clamp(.9rem,4vw,1.4rem);letter-spacing:.08em}
+  .dates-dreta{flex-direction:row;flex-wrap:wrap;justify-content:center}
+}
+
 .lloc-controls{display:flex;gap:.9rem;flex-wrap:wrap;align-items:center;justify-content:center}
 .lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
   border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
@@ -123,9 +147,16 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <!-- QUAN -->
 <section class="bloc">
   <div class="bloc-titol"><h2>Quan</h2></div>
-  <div class="dates">
-    <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
-    <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
+  <div class="quan-fila">
+    <div class="temps-botons">
+      <button type="button" class="temps" data-temps="avui" style="background-image:url('avui.jpeg')"><span class="nom">Avui</span></button>
+      <button type="button" class="temps" data-temps="dema" style="background-image:url('dema.jpeg')"><span class="nom">Demà</span></button>
+      <button type="button" class="temps" data-temps="setmana" style="background-image:url('setmana.jpeg')"><span class="nom">Fins diumenge</span></button>
+    </div>
+    <div class="dates-dreta">
+      <div class="camp-data"><label>Des del</label><input id="f-desde" type="date"></div>
+      <div class="camp-data"><label>Fins al</label><input id="f-fins" type="date"></div>
+    </div>
   </div>
 </section>
 
@@ -476,7 +507,49 @@ document.querySelectorAll(".toggle-mapa button").forEach(b=>b.onclick=()=>{
 let temp;
 ["#f-text","#f-desde","#f-fins"].forEach(s=>{
   const el=$(s);const ev=(el.tagName==="INPUT"&&el.type==="text")?"input":"change";
-  el.addEventListener(ev,()=>{clearTimeout(temp);temp=setTimeout(carregaActes,350)});
+  el.addEventListener(ev,()=>{
+    if(s==="#f-desde"||s==="#f-fins"){
+      document.querySelectorAll(".temps.actiu").forEach(b=>b.classList.remove("actiu"));
+    }
+    clearTimeout(temp);temp=setTimeout(carregaActes,350);
+  });
+});
+
+// ---- botons de temps (Avui / Demà / Fins diumenge), acumulables ----
+function isoLocal(d){
+  // data local en format YYYY-MM-DD (sense desfasament de fus)
+  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+}
+function rangTemps(clau){
+  const ara=new Date(); ara.setHours(0,0,0,0);
+  if(clau==="avui"){ return [new Date(ara), new Date(ara)]; }
+  if(clau==="dema"){ const d=new Date(ara); d.setDate(d.getDate()+1); return [d, new Date(d)]; }
+  if(clau==="setmana"){
+    // d'avui fins al diumenge d'aquesta setmana (si avui ja és diumenge, avui mateix)
+    const diug=new Date(ara); const dow=(diug.getDay()+6)%7; // 0=dilluns … 6=diumenge
+    diug.setDate(diug.getDate()+(6-dow));
+    return [new Date(ara), diug];
+  }
+  return null;
+}
+function aplicaTemps(){
+  const actius=[...document.querySelectorAll(".temps.actiu")].map(b=>b.dataset.temps);
+  if(!actius.length) return false;
+  let min=null,max=null;
+  actius.forEach(c=>{
+    const r=rangTemps(c); if(!r) return;
+    if(!min||r[0]<min) min=r[0];
+    if(!max||r[1]>max) max=r[1];
+  });
+  if(min&&max){ $("#f-desde").value=isoLocal(min); $("#f-fins").value=isoLocal(max); }
+  return true;
+}
+document.querySelectorAll(".temps").forEach(b=>{
+  b.addEventListener("click",()=>{
+    b.classList.toggle("actiu");
+    if(!aplicaTemps()){ $("#f-desde").value=""; $("#f-fins").value=""; }
+    carregaActes();
+  });
 });
 
 $("#netejar").onclick=()=>{
@@ -485,6 +558,7 @@ $("#netejar").onclick=()=>{
   seleccionades.clear();
   esborraComarques();
   document.querySelectorAll(".cat").forEach(c=>c.classList.remove("actiu"));
+  document.querySelectorAll(".temps").forEach(c=>c.classList.remove("actiu"));
   carregaActes();
 };
 
