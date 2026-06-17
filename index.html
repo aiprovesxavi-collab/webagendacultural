@@ -450,14 +450,27 @@ async function carregaActes(){
     return q;
   }
 
+  $("#estat-llista").textContent="";
   let totes = [];
   let desdeFila = 0;
-  const MIDA = 1000;
+  const MIDA = 200;
+  let primerLot = true;
   while(true){
     const {data, error} = await fesConsulta().range(desdeFila, desdeFila + MIDA - 1);
-    if(error){$("#estat-llista").textContent="Error carregant les dades: "+error.message;return}
+    if(error){
+      if(primerLot) $("#estat-llista").textContent="Error carregant les dades: "+error.message;
+      return;
+    }
     if(!data || data.length===0) break;
+
     totes = totes.concat(data);
+    // pinta aquest lot de seguida (el primer substitueix, la resta s'afegeixen)
+    pintaLlista(data, !primerLot);
+    primerLot = false;
+    // actualitza el comptador a mesura que entren
+    $("#compte").textContent = totes.length;
+    $("#et-res").textContent = totes.length===1?"acte trobat":"actes trobats";
+
     if(data.length < MIDA) break;
     desdeFila += MIDA;
     if(desdeFila > 200000) break;
@@ -466,14 +479,15 @@ async function carregaActes(){
   const actes = totes;
   $("#compte").textContent = actes.length;
   $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
-  pintaLlista(actes);
+  // el mapa es pinta un sol cop, al final (recalcular-lo a cada lot seria lent)
   pintaMapa(actes);
   $("#estat-llista").textContent = actes.length?"":"No s'han trobat actes amb aquests filtres.";
 }
 
 // ---- llista ----
-function pintaLlista(actes){
-  const g=$("#graella");g.innerHTML="";
+function pintaLlista(actes, afegir=false){
+  const g=$("#graella");
+  if(!afegir) g.innerHTML="";
   actes.forEach(a=>{
     const t=document.createElement("article");
     t.className="targeta";
