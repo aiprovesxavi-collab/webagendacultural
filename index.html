@@ -19,6 +19,8 @@
   --c-literatura:#3257be;
   --c-cinema:#7b3fe4;
   --c-formacio:#0f9bd1;
+  --c-dansa:#c0379b;
+  --c-conferencies:#0d8a8a;
   --c-altres:#5a6472;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -328,13 +330,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
 
-// ---- definicio visual de les 8 categories ----
+// ---- definicio visual de les 10 categories ----
 const CATS = [
-  {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · dansa · circ · màgia · titelles", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
+  {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · circ · màgia · titelles · monòlegs", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
+  {catBD:"Dansa",           etiqueta:"Dansa",        sub:"dansa · ballet · contemporània", color:"var(--c-dansa)", img:"imatges/dansa.jpg"},
   {catBD:"Arts musicals",   etiqueta:"Música",   sub:"clàssica · jazz · blues · rock · pop", color:"var(--c-musicals)", img:"imatges/musicals.jpg"},
   {catBD:"Arts plàstiques", etiqueta:"Exposicions",     sub:"fotografia · pintura · escultura", color:"var(--c-plastiques)", img:"imatges/plastiques.jpg"},
   {catBD:"Cultura popular", etiqueta:"Cultura popular", sub:"festes majors · correfocs · castellers", color:"var(--c-popular)", img:"imatges/popular.jpg"},
-  {catBD:"Literatura",      etiqueta:"Conferències",    sub:"recitals de poesia · conferències", color:"var(--c-literatura)", img:"imatges/literatura.jpg"},
+  {catBD:"Literatura",      etiqueta:"Literatura",    sub:"poesia · recitals · presentacions · contacontes", color:"var(--c-literatura)", img:"imatges/literatura.jpg"},
+  {catBD:"Conferències",    etiqueta:"Conferències",  sub:"conferències · taules rodones · xerrades · simposis", color:"var(--c-conferencies)", img:"imatges/conferencies.jpg"},
   {catBD:"Cinema",          etiqueta:"Cinema",          sub:"pel·lícules a la fresca · cicles temàtics", color:"var(--c-cinema)", img:"imatges/cinema.jpg"},
   {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
