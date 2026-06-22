@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal de gestors · qfem.cat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#16130f; --gris:#6b6359; --paper:#ffffff; --fons:#fafafa;
+  --vora:#ececec; --ombra:rgba(0,0,0,.08);
+  --blau:#1f6feb; --verd:#1a9e54; --vermell:#e23b54;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',system-ui,sans-serif;background:var(--fons);color:var(--tinta);-webkit-font-smoothing:antialiased;line-height:1.5;padding:1.5rem}
+.capcalera{text-align:center;padding:2rem 1rem 1.5rem;max-width:640px;margin:0 auto}
+.capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(1.6rem,4vw,2.6rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
+.capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.5em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
+.capcalera p{color:var(--gris);font-size:1.1rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic}
+
+.targeta{background:var(--paper);max-width:640px;margin:1.5rem auto;border:1px solid var(--vora);border-radius:16px;box-shadow:0 4px 20px var(--ombra);padding:2rem}
+.targeta h2{font-family:'Cinzel',serif;font-weight:600;font-size:1.3rem;letter-spacing:.04em;margin-bottom:1.2rem;text-transform:uppercase}
+
+label{display:block;font-size:.9rem;font-weight:600;margin:.9rem 0 .3rem;color:var(--tinta)}
+label .opc{font-weight:400;color:var(--gris);font-size:.82rem}
+input,select,textarea{width:100%;padding:.7rem .85rem;border:1.5px solid var(--vora);border-radius:10px;font-family:inherit;font-size:1rem;background:var(--paper);color:var(--tinta)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blau)}
+textarea{resize:vertical;min-height:90px}
+.fila{display:flex;gap:.8rem}
+.fila>div{flex:1}
+
+button{font-family:inherit;font-weight:600;font-size:1rem;padding:.8rem 1.4rem;border:none;border-radius:10px;cursor:pointer;transition:opacity .15s}
+button:hover{opacity:.9}
+button:disabled{opacity:.5;cursor:not-allowed}
+.btn-principal{background:var(--tinta);color:#fff;width:100%;margin-top:1.3rem}
+.btn-secundari{background:none;color:var(--blau);text-decoration:underline;padding:.4rem;font-size:.9rem}
+
+.enllac-canvi{text-align:center;margin-top:1rem;font-size:.9rem;color:var(--gris)}
+.missatge{padding:.85rem 1rem;border-radius:10px;margin:1rem 0;font-size:.92rem;display:none}
+.missatge.err{background:#fdecee;color:#b3243c;display:block}
+.missatge.ok{background:#e8f7ee;color:#127a3e;display:block}
+.missatge.info{background:#eef3fd;color:#1a4fa0;display:block}
+
+.amaga{display:none}
+.autocomplete{position:relative}
+.suggeriments{position:absolute;top:100%;left:0;right:0;background:var(--paper);border:1px solid var(--vora);border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;z-index:10;box-shadow:0 6px 16px var(--ombra)}
+.suggeriments div{padding:.6rem .85rem;cursor:pointer}
+.suggeriments div:hover,.suggeriments div.actiu{background:var(--fons)}
+.peu{text-align:center;color:var(--gris);font-size:.82rem;margin-top:1.5rem}
+</style>
+</head>
+<body>
+
+<div class="capcalera">
+  <h1>QFEM <em>· Portal de gestors</em></h1>
+  <p>Introdueix els actes culturals del teu espai</p>
+</div>
+
+<!-- ============ PANTALLA 1: AUTENTICACIO (login + registre) ============ -->
+<div class="targeta" id="pantalla-auth">
+  <h2 id="auth-titol">Inicia sessió</h2>
+  <div class="missatge" id="auth-msg"></div>
+
+  <!-- camps comuns -->
+  <label>Correu electrònic</label>
+  <input type="email" id="au-email" autocomplete="email" placeholder="el-teu-correu@exemple.cat">
+
+  <label>Contrasenya</label>
+  <input type="password" id="au-pass" autocomplete="current-password" placeholder="········">
+
+  <!-- camps NOMÉS de registre -->
+  <div id="camps-registre" class="amaga">
+    <label>Nom de la persona o entitat</label>
+    <input type="text" id="au-nom" placeholder="Ex: Joan Pla / Associació Cultural X">
+
+    <label>Mòbil de contacte</label>
+    <input type="tel" id="au-mobil" placeholder="6XX XXX XXX">
+
+    <label>Nom de l'espai <span class="opc">(la sala, equipament...)</span></label>
+    <input type="text" id="au-espai" placeholder="Ex: Sala Petita del Teatre X">
+
+    <label>Web de l'espai <span class="opc">(opcional)</span></label>
+    <input type="url" id="au-web" placeholder="https://...">
+
+    <label>Municipi de l'espai</label>
+    <div class="autocomplete">
+      <input type="text" id="au-municipi" placeholder="Comença a escriure...">
+      <div class="suggeriments amaga" id="au-muni-sug"></div>
+    </div>
+  </div>
+
+  <button class="btn-principal" id="au-boto">Entra</button>
+
+  <div class="enllac-canvi">
+    <span id="au-canvi-text">Encara no tens compte?</span>
+    <button class="btn-secundari" id="au-canvi">Registra't</button>
+  </div>
+</div>
+
+<!-- ============ PANTALLA 2: ESPERANT APROVACIO ============ -->
+<div class="targeta amaga" id="pantalla-espera">
+  <h2>Compte en revisió</h2>
+  <div class="missatge info" style="display:block">
+    El teu compte s'ha creat correctament, però encara ha de ser <strong>aprovat</strong>
+    abans de poder publicar actes. Rebràs l'accés un cop validem les teves dades.
+    Gràcies per la paciència!
+  </div>
+  <button class="btn-principal" id="esp-surt">Tanca sessió</button>
+</div>
+
+<!-- ============ PANTALLA 3: FORMULARI D'ACTE ============ -->
+<div class="targeta amaga" id="pantalla-acte">
+  <h2>Nou acte</h2>
+  <div class="missatge" id="acte-msg"></div>
+
+  <label>Nom de l'acte *</label>
+  <input type="text" id="ac-nom" placeholder="Ex: Concert de tardor amb...">
+
+  <label>Descripció</label>
+  <textarea id="ac-desc" placeholder="Explica de què va l'acte..."></textarea>
+
+  <label>Què és <span class="opc">(concert, teatre, exposició...)</span></label>
+  <input type="text" id="ac-tipus" placeholder="Ex: concert de jazz">
+
+  <div class="fila">
+    <div>
+      <label>Data i hora *</label>
+      <input type="text" id="ac-data" placeholder="Ex: 15 de juliol 2026, 20:00">
+    </div>
+  </div>
+
+  <label>Lloc <span class="opc">(nom de l'espai)</span></label>
+  <input type="text" id="ac-lloc" placeholder="Ex: Sala Gran">
+
+  <label>Adreça <span class="opc">(carrer i número)</span></label>
+  <input type="text" id="ac-adreca" placeholder="Ex: c/ Major 12">
+
+  <label>Municipi *</label>
+  <div class="autocomplete">
+    <input type="text" id="ac-municipi" placeholder="Comença a escriure...">
+    <div class="suggeriments amaga" id="ac-muni-sug"></div>
+  </div>
+
+  <div class="fila">
+    <div>
+      <label>Preu</label>
+      <input type="text" id="ac-preu" placeholder="Ex: 12 € / Gratuït">
+    </div>
+    <div>
+      <label>Públic</label>
+      <select id="ac-public">
+        <option value="">— Tria —</option>
+        <option>Tothom</option>
+        <option>Familiar</option>
+        <option>Infantil</option>
+        <option>Adults</option>
+        <option>Joves</option>
+      </select>
+    </div>
+  </div>
+
+  <label>Enllaç d'entrades <span class="opc">(per comprar / reservar)</span></label>
+  <input type="url" id="ac-entrades" placeholder="https://...">
+
+  <label>Enllaç d'informació <span class="opc">(pàgina de l'acte)</span></label>
+  <input type="url" id="ac-url" placeholder="https://...">
+
+  <label>Imatge <span class="opc">(URL d'una foto o cartell)</span></label>
+  <input type="url" id="ac-imatge" placeholder="https://...">
+
+  <button class="btn-principal" id="ac-boto">Envia l'acte</button>
+
+  <div class="enllac-canvi">
+    <button class="btn-secundari" id="ac-surt">Tanca sessió</button>
+  </div>
+</div>
+
+<div class="peu">qfem.cat · Agenda Cultural de Catalunya</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const $ = id => document.getElementById(id);
+function mostra(pantalla){
+  ["pantalla-auth","pantalla-espera","pantalla-acte"].forEach(p=>$(p).classList.add("amaga"));
+  $(pantalla).classList.remove("amaga");
+}
+function msg(el, text, tipus){ el.className = "missatge " + tipus; el.textContent = text; }
+function netejaMsg(el){ el.className = "missatge"; el.textContent = ""; }
+
+// ---- estat: login o registre ----
+let modeRegistre = false;
+$("au-canvi").onclick = () => {
+  modeRegistre = !modeRegistre;
+  $("camps-registre").classList.toggle("amaga", !modeRegistre);
+  $("auth-titol").textContent = modeRegistre ? "Crea el teu compte" : "Inicia sessió";
+  $("au-boto").textContent = modeRegistre ? "Registra't" : "Entra";
+  $("au-canvi-text").textContent = modeRegistre ? "Ja tens compte?" : "Encara no tens compte?";
+  $("au-canvi").textContent = modeRegistre ? "Inicia sessió" : "Registra't";
+  netejaMsg($("auth-msg"));
+};
+
+// ---- municipis (per als dos cercadors) ----
+let MUNICIPIS = [];
+async function carregaMunicipis(){
+  if(MUNICIPIS.length) return;
+  const {data} = await sb.from("municipis").select("id,nom,nom_norm").order("nom").limit(2000);
+  MUNICIPIS = data || [];
+}
+function normText(s){
+  return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+}
+// connecta un input amb el seu panell de suggeriments; desa l'id triat a un objecte
+function autocompleta(inputId, sugId, destinacio){
+  const inp = $(inputId), sug = $(sugId);
+  inp.addEventListener("input", ()=>{
+    destinacio.id = null;  // si torna a escriure, invalida la tria anterior
+    const q = normText(inp.value.trim());
+    if(q.length < 2){ sug.classList.add("amaga"); return; }
+    const llista = MUNICIPIS.filter(m => m.nom_norm.includes(q)).slice(0,8);
+    if(!llista.length){ sug.classList.add("amaga"); return; }
+    sug.innerHTML = "";
+    llista.forEach(m=>{
+      const d = document.createElement("div");
+      d.textContent = m.nom;
+      d.onclick = ()=>{ inp.value = m.nom; destinacio.id = m.id; destinacio.nom = m.nom; sug.classList.add("amaga"); };
+      sug.appendChild(d);
+    });
+    sug.classList.remove("amaga");
+  });
+  inp.addEventListener("blur", ()=> setTimeout(()=>sug.classList.add("amaga"), 200));
+}
+const muniRegistre = {id:null, nom:null};
+const muniActe = {id:null, nom:null};
+
+// ---- botó principal d'auth (login o registre) ----
+$("au-boto").onclick = async () => {
+  netejaMsg($("auth-msg"));
+  const email = $("au-email").value.trim();
+  const pass = $("au-pass").value;
+  if(!email || !pass){ msg($("auth-msg"),"Cal correu i contrasenya.","err"); return; }
+  $("au-boto").disabled = true;
+
+  try {
+    if(modeRegistre){
+      // validacions de registre
+      const mobil = $("au-mobil").value.trim();
+      if(!mobil){ msg($("auth-msg"),"El mòbil és obligatori.","err"); $("au-boto").disabled=false; return; }
+      if(!muniRegistre.id){ msg($("auth-msg"),"Tria un municipi de la llista.","err"); $("au-boto").disabled=false; return; }
+
+      // 1) crear compte a Auth, passant les dades del gestor com a metadades.
+      //    Amb confirmació de correu activada, la fila a `gestors` la crea un
+      //    trigger a la base de dades (handle_new_gestor) llegint aquestes metadades.
+      const {data:dataAuth, error:errAuth} = await sb.auth.signUp({
+        email, password:pass,
+        options:{ data:{
+          nom: $("au-nom").value.trim() || null,
+          mobil,
+          espai: $("au-espai").value.trim() || null,
+          web_espai: $("au-web").value.trim() || null,
+          municipi: muniRegistre.nom,
+        }}
+      });
+      if(errAuth){ msg($("auth-msg"), errAuth.message, "err"); $("au-boto").disabled=false; return; }
+
+      // confirmació de correu: el gestor ha de clicar l'enllaç abans d'entrar
+      msg($("auth-msg"),"T'hem enviat un correu de confirmació. Obre'l, clica l'enllaç per validar el teu correu, i després torna aquí per iniciar sessió. (Mira també la carpeta de correu brossa.)","ok");
+      // tornar a mode login perquè, en confirmar, pugui entrar
+      modeRegistre = false;
+      $("camps-registre").classList.add("amaga");
+      $("auth-titol").textContent = "Inicia sessió";
+      $("au-boto").textContent = "Entra";
+      $("au-canvi-text").textContent = "Encara no tens compte?";
+      $("au-canvi").textContent = "Registra't";
+    } else {
+      // login
+      const {error} = await sb.auth.signInWithPassword({email, password:pass});
+      if(error){ msg($("auth-msg"),"Correu o contrasenya incorrectes.","err"); $("au-boto").disabled=false; return; }
+      await comprovaEstat();
+    }
+  } catch(e){
+    msg($("auth-msg"),"Error: "+e.message,"err");
+  }
+  $("au-boto").disabled = false;
+};
+
+// ---- en iniciar sessió: mirar si està aprovat ----
+async function comprovaEstat(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user){ mostra("pantalla-auth"); return; }
+  const {data:gestor} = await sb.from("gestors").select("aprovat,municipi").eq("id",user.id).single();
+  if(gestor && gestor.aprovat){
+    // preselecciona el municipi del gestor al formulari
+    if(gestor.municipi){ $("ac-municipi").value = gestor.municipi; const m = MUNICIPIS.find(x=>x.nom===gestor.municipi); if(m){ muniActe.id=m.id; muniActe.nom=m.nom; } }
+    mostra("pantalla-acte");
+  } else {
+    mostra("pantalla-espera");
+  }
+}
+
+// ---- tancar sessió ----
+async function surt(){ await sb.auth.signOut(); location.reload(); }
+$("esp-surt").onclick = surt;
+$("ac-surt").onclick = surt;
+
+// ---- enviar acte ----
+$("ac-boto").onclick = async () => {
+  netejaMsg($("acte-msg"));
+  const nom = $("ac-nom").value.trim();
+  if(!nom){ msg($("acte-msg"),"El nom de l'acte és obligatori.","err"); return; }
+  if(!muniActe.id){ msg($("acte-msg"),"Tria un municipi de la llista.","err"); return; }
+  if(!$("ac-data").value.trim()){ msg($("acte-msg"),"La data és obligatòria.","err"); return; }
+
+  $("ac-boto").disabled = true;
+  msg($("acte-msg"),"Validant i desant l'acte...","info");
+
+  const acte = {
+    nom,
+    descripcio: $("ac-desc").value.trim() || null,
+    tipus: $("ac-tipus").value.trim() || null,
+    data_text: $("ac-data").value.trim(),
+    lloc_nom: $("ac-lloc").value.trim() || null,
+    adreca: $("ac-adreca").value.trim() || null,
+    municipi_text: muniActe.nom,
+    municipi_id: muniActe.id,
+    preu_text: $("ac-preu").value.trim() || null,
+    public_desti: $("ac-public").value || null,
+    enllac_entrades: $("ac-entrades").value.trim() || null,
+    url_original: $("ac-url").value.trim() || null,
+    imatge: $("ac-imatge").value.trim() || null,
+  };
+
+  try {
+    const {data:{session}} = await sb.auth.getSession();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/crea-acte-gestor`, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json", "Authorization":`Bearer ${session.access_token}` },
+      body: JSON.stringify({acte}),
+    });
+    const res = await r.json();
+    if(res.ok){
+      msg($("acte-msg"),"✓ "+res.missatge,"ok");
+      // buida el formulari (excepte municipi del gestor)
+      ["ac-nom","ac-desc","ac-tipus","ac-data","ac-lloc","ac-adreca","ac-preu","ac-entrades","ac-url","ac-imatge"].forEach(id=>$(id).value="");
+      $("ac-public").value="";
+    } else if(res.rebutjat){
+      msg($("acte-msg"),"✗ "+res.motiu,"err");
+    } else {
+      msg($("acte-msg"),"✗ "+(res.error||"No s'ha pogut desar."),"err");
+    }
+  } catch(e){
+    msg($("acte-msg"),"Error de connexió: "+e.message,"err");
+  }
+  $("ac-boto").disabled = false;
+};
+
+// ---- arrencada ----
+(async ()=>{
+  await carregaMunicipis();
+  autocompleta("au-municipi","au-muni-sug",muniRegistre);
+  autocompleta("ac-municipi","ac-muni-sug",muniActe);
+  // si ja hi havia sessió oberta, comprova l'estat
+  const {data:{session}} = await sb.auth.getSession();
+  if(session) await comprovaEstat();
+})();
+</script>
+</body>
+</html>
