@@ -33,6 +33,17 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   background:var(--paper);border:1.5px solid var(--vora);border-radius:11px;cursor:pointer;
   box-shadow:0 2px 8px rgba(0,0,0,.08);transition:box-shadow .2s}
 .menu-boto:hover{box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.gestors-boto{position:fixed;top:1.1rem;right:1.1rem;z-index:60;width:46px;height:46px;
+  display:flex;justify-content:center;align-items:center;
+  background:var(--paper);border:1.5px solid var(--vora);border-radius:11px;cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.08);transition:box-shadow .2s;text-decoration:none}
+.gestors-boto:hover{box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.gestors-boto svg{width:26px;height:26px;stroke:var(--tinta);fill:none;stroke-width:1.7}
+.gestors-boto .tip{position:absolute;top:54px;right:0;background:var(--tinta);color:#fff;
+  font-family:'Outfit',sans-serif;font-size:.72rem;font-weight:600;letter-spacing:.04em;
+  padding:.4rem .6rem;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;
+  transition:opacity .2s;text-transform:uppercase}
+.gestors-boto:hover .tip{opacity:1}
 .menu-boto span{display:block;width:22px;height:2.4px;background:var(--tinta);border-radius:2px;transition:transform .25s,opacity .25s}
 .menu-boto.obert span:nth-child(1){transform:translateY(7.4px) rotate(45deg)}
 .menu-boto.obert span:nth-child(2){opacity:0}
@@ -165,6 +176,12 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <nav class="menu-panell" id="menu-panell" aria-label="Menú principal">
   <a href="https://aiprovesxavi-collab.github.io/webagendacultural/musica/index.html">QFEM·MÚSICA</a>
 </nav>
+
+<!-- accés al portal de gestors -->
+<a class="gestors-boto" href="gestors/" aria-label="Portal de gestors culturals">
+  <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="3.2"/><path d="M5.5 19a6.5 6.5 0 0 1 13 0"/><circle cx="12" cy="12" r="10.2"/></svg>
+  <span class="tip">Gestors culturals</span>
+</a>
 
 <header class="capcalera">
   <h1>Agenda Cultural <em>de Catalunya</em></h1>
