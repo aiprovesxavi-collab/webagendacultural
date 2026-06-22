@@ -337,12 +337,14 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <footer class="peu">Dades obertes de la Generalitat de Catalunya i l'Ajuntament de Barcelona · Agenda Cultural</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
 <script>
 // ---- CONFIGURACIO SUPABASE ----
 const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
 
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
