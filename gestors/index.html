@@ -49,12 +49,21 @@ button:disabled{opacity:.5;cursor:not-allowed}
 .suggeriments div{padding:.6rem .85rem;cursor:pointer}
 .suggeriments div:hover,.suggeriments div.actiu{background:var(--fons)}
 .peu{text-align:center;color:var(--gris);font-size:.82rem;margin-top:1.5rem}
+.cats-selector{margin-top:.4rem}
+.cats-carregant{color:var(--gris);font-style:italic;padding:1rem 0}
+.cat-bloc{margin-bottom:1.4rem;border:1px solid var(--vora);border-radius:12px;overflow:hidden;background:var(--paper)}
+.cat-foto{position:relative;height:70px;background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center}
+.cat-foto::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.38)}
+.cat-foto span{position:relative;z-index:1;color:#fff;font-family:'Cinzel',serif;font-weight:700;font-size:1.05rem;letter-spacing:.05em;text-transform:uppercase;text-shadow:0 1px 4px rgba(0,0,0,.5);text-align:center;padding:0 .5rem}
+.cat-subs{display:flex;flex-wrap:wrap;gap:.4rem .9rem;padding:.8rem 1rem}
+.cat-subs label{display:flex;align-items:center;gap:.4rem;margin:0;font-weight:400;font-size:.92rem;cursor:pointer}
+.cat-subs input[type=checkbox]{width:auto;margin:0}
 </style>
 </head>
 <body>
 
 <div class="capcalera">
-  <h1>QFEM <em>· Portal de gestors</em></h1>
+  <h1>QFEM <em>· Portal de gestors culturals</em></h1>
   <p>Introdueix els actes culturals del teu espai</p>
 </div>
 
@@ -121,8 +130,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <label>Descripció</label>
   <textarea id="ac-desc" placeholder="Explica de què va l'acte..."></textarea>
 
-  <label>Què és <span class="opc">(concert, teatre, exposició...)</span></label>
-  <input type="text" id="ac-tipus" placeholder="Ex: concert de jazz">
+  <label>Què és? * <span class="opc">(marca una o més subcategories; pots triar de diferents blocs)</span></label>
+  <div id="ac-cats" class="cats-selector">
+    <div class="cats-carregant">Carregant categories...</div>
+  </div>
 
   <div class="fila">
     <div>
@@ -212,6 +223,68 @@ async function carregaMunicipis(){
   const {data} = await sb.from("municipis").select("id,nom,nom_norm").order("nom").limit(2000);
   MUNICIPIS = data || [];
 }
+
+// ---- categories i subcategories (selector visual del "Què és?") ----
+// mapa de nom de categoria -> fitxer d'imatge (els mateixos que la web pública)
+const FOTO_CAT = {
+  "Arts escèniques":"esceniques.jpg", "Dansa":"dansa.jpg", "Arts musicals":"musicals.jpg",
+  "Arts plàstiques":"plastiques.jpg", "Cultura popular":"popular.jpg", "Literatura":"literatura.jpg",
+  "Conferències":"conferencies.jpg", "Cinema":"cinema.jpg", "Formació":"formacio.jpg", "Altres":"altres.jpg",
+};
+const BASE_IMATGES = "https://qfem.cat/imatges/";
+
+async function carregaCategories(){
+  const cont = $("ac-cats");
+  // carrega les dues taules
+  const {data:cats} = await sb.from("categories").select("id,nom,ordre").order("ordre");
+  const {data:subs} = await sb.from("subcategories").select("id,nom,categoria_id,ordre").order("ordre");
+  if(!cats || !subs){ cont.innerHTML = "<div class='cats-carregant'>No s'han pogut carregar les categories.</div>"; return; }
+
+  cont.innerHTML = "";
+  cats.forEach(cat=>{
+    const sevesSubs = subs.filter(s=>s.categoria_id===cat.id);
+    if(!sevesSubs.length) return;
+    const bloc = document.createElement("div");
+    bloc.className = "cat-bloc";
+
+    // foto de la categoria amb el nom a sobre
+    const foto = document.createElement("div");
+    foto.className = "cat-foto";
+    const fitxer = FOTO_CAT[cat.nom];
+    if(fitxer) foto.style.backgroundImage = `url('${BASE_IMATGES}${fitxer}')`;
+    const titol = document.createElement("span");
+    titol.textContent = cat.nom;
+    foto.appendChild(titol);
+    bloc.appendChild(foto);
+
+    // caselles de subcategories
+    const cont2 = document.createElement("div");
+    cont2.className = "cat-subs";
+    sevesSubs.forEach(s=>{
+      const lab = document.createElement("label");
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.className = "sub-chk";
+      chk.dataset.categoria = cat.nom;
+      chk.dataset.subcategoria = s.nom;
+      lab.appendChild(chk);
+      lab.appendChild(document.createTextNode(" " + s.nom));
+      cont2.appendChild(lab);
+    });
+    bloc.appendChild(cont2);
+    cont.appendChild(bloc);
+  });
+}
+
+// recull les subcategories marcades com a parelles {categoria, subcategoria}
+function categoriesTriades(){
+  const triades = [];
+  document.querySelectorAll(".sub-chk:checked").forEach(chk=>{
+    triades.push({categoria: chk.dataset.categoria, subcategoria: chk.dataset.subcategoria});
+  });
+  return triades;
+}
+
 function normText(s){
   return (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
 }
@@ -319,10 +392,12 @@ $("ac-boto").onclick = async () => {
   $("ac-boto").disabled = true;
   msg($("acte-msg"),"Validant i desant l'acte...","info");
 
+  const cats = categoriesTriades();
+  if(!cats.length){ msg($("acte-msg"),"Marca almenys una opció a «Què és?».","err"); $("ac-boto").disabled=false; return; }
+
   const acte = {
     nom,
     descripcio: $("ac-desc").value.trim() || null,
-    tipus: $("ac-tipus").value.trim() || null,
     data_text: $("ac-data").value.trim(),
     lloc_nom: $("ac-lloc").value.trim() || null,
     adreca: $("ac-adreca").value.trim() || null,
@@ -330,6 +405,7 @@ $("ac-boto").onclick = async () => {
     municipi_id: muniActe.id,
     preu_text: $("ac-preu").value.trim() || null,
     public_desti: $("ac-public").value || null,
+    categories: cats,
     enllac_entrades: $("ac-entrades").value.trim() || null,
     url_original: $("ac-url").value.trim() || null,
     imatge: $("ac-imatge").value.trim() || null,
@@ -346,8 +422,9 @@ $("ac-boto").onclick = async () => {
     if(res.ok){
       msg($("acte-msg"),"✓ "+res.missatge,"ok");
       // buida el formulari (excepte municipi del gestor)
-      ["ac-nom","ac-desc","ac-tipus","ac-data","ac-lloc","ac-adreca","ac-preu","ac-entrades","ac-url","ac-imatge"].forEach(id=>$(id).value="");
+      ["ac-nom","ac-desc","ac-data","ac-lloc","ac-adreca","ac-preu","ac-entrades","ac-url","ac-imatge"].forEach(id=>$(id).value="");
       $("ac-public").value="";
+      document.querySelectorAll(".sub-chk:checked").forEach(chk=>chk.checked=false);
     } else if(res.rebutjat){
       msg($("acte-msg"),"✗ "+res.motiu,"err");
     } else {
@@ -362,6 +439,7 @@ $("ac-boto").onclick = async () => {
 // ---- arrencada ----
 (async ()=>{
   await carregaMunicipis();
+  await carregaCategories();
   autocompleta("au-municipi","au-muni-sug",muniRegistre);
   autocompleta("ac-municipi","ac-muni-sug",muniActe);
   // si ja hi havia sessió oberta, comprova l'estat
