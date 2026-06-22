@@ -130,6 +130,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
   <label>Descripció</label>
   <textarea id="ac-desc" placeholder="Explica de què va l'acte..."></textarea>
 
+  <label>Artistes / intèrprets <span class="opc">(noms separats per comes, si escau)</span></label>
+  <input type="text" id="ac-artistes" placeholder="Ex: Maria del Mar Bonet, Quartet Brossa">
+
   <label>Què és? * <span class="opc">(marca una o més subcategories; pots triar de diferents blocs)</span></label>
   <div id="ac-cats" class="cats-selector">
     <div class="cats-carregant">Carregant categories...</div>
@@ -147,6 +150,9 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
   <label>Adreça <span class="opc">(carrer i número)</span></label>
   <input type="text" id="ac-adreca" placeholder="Ex: c/ Major 12">
+
+  <label>Organitzador <span class="opc">(entitat o persona que organitza)</span></label>
+  <input type="text" id="ac-organitzador" placeholder="Ex: Ajuntament de... / Associació...">
 
   <label>Municipi *</label>
   <div class="autocomplete">
@@ -172,6 +178,15 @@ button:disabled{opacity:.5;cursor:not-allowed}
     </div>
   </div>
 
+  <label>Tipus de local</label>
+  <select id="ac-local">
+    <option value="">— Tria —</option>
+    <option>Gran escenari</option>
+    <option>Petit local</option>
+    <option>Exterior</option>
+    <option>Altres</option>
+  </select>
+
   <label>Enllaç d'entrades <span class="opc">(per comprar / reservar)</span></label>
   <input type="url" id="ac-entrades" placeholder="https://...">
 
@@ -190,7 +205,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <div class="peu">qfem.cat · Agenda Cultural de Catalunya</div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
 <script>
 const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
@@ -398,6 +413,7 @@ $("ac-boto").onclick = async () => {
   const acte = {
     nom,
     descripcio: $("ac-desc").value.trim() || null,
+    artistes: $("ac-artistes").value.trim() || null,
     data_text: $("ac-data").value.trim(),
     lloc_nom: $("ac-lloc").value.trim() || null,
     adreca: $("ac-adreca").value.trim() || null,
@@ -405,6 +421,8 @@ $("ac-boto").onclick = async () => {
     municipi_id: muniActe.id,
     preu_text: $("ac-preu").value.trim() || null,
     public_desti: $("ac-public").value || null,
+    organitzador: $("ac-organitzador").value.trim() || null,
+    tipus_local: $("ac-local").value || null,
     categories: cats,
     enllac_entrades: $("ac-entrades").value.trim() || null,
     url_original: $("ac-url").value.trim() || null,
@@ -422,8 +440,9 @@ $("ac-boto").onclick = async () => {
     if(res.ok){
       msg($("acte-msg"),"✓ "+res.missatge,"ok");
       // buida el formulari (excepte municipi del gestor)
-      ["ac-nom","ac-desc","ac-data","ac-lloc","ac-adreca","ac-preu","ac-entrades","ac-url","ac-imatge"].forEach(id=>$(id).value="");
+      ["ac-nom","ac-desc","ac-artistes","ac-organitzador","ac-data","ac-lloc","ac-adreca","ac-preu","ac-entrades","ac-url","ac-imatge"].forEach(id=>$(id).value="");
       $("ac-public").value="";
+      $("ac-local").value="";
       document.querySelectorAll(".sub-chk:checked").forEach(chk=>chk.checked=false);
     } else if(res.rebutjat){
       msg($("acte-msg"),"✗ "+res.motiu,"err");
