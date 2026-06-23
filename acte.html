@@ -50,16 +50,19 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
   <div id="contingut"><div class="estat">Carregant l'acte…</div></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
 <script>
 const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
 
 const IMG_CAT = {
-  "Arts escèniques":"imatges/esceniques.jpg","Arts musicals":"imatges/musicals.jpg",
-  "Arts plàstiques":"imatges/plastiques.jpg","Cultura popular":"imatges/popular.jpg",
-  "Literatura":"imatges/literatura.jpg","Cinema":"imatges/cinema.jpg",
+  "Arts escèniques":"imatges/esceniques.jpg","Dansa":"imatges/dansa.jpg",
+  "Arts musicals":"imatges/musicals.jpg","Arts plàstiques":"imatges/plastiques.jpg",
+  "Cultura popular":"imatges/popular.jpg","Literatura":"imatges/literatura.jpg",
+  "Conferències":"imatges/conferencies.jpg","Cinema":"imatges/cinema.jpg",
   "Formació":"imatges/formacio.jpg","Altres":"imatges/altres.jpg"
 };
 function fmtData(d){
