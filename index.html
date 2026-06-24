@@ -133,6 +133,14 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .cerca input:focus{outline:none;border-color:var(--c-musicals)}
 
 .barra-res{max-width:1200px;margin:1.2rem auto .4rem;padding:0 1.5rem;display:flex;align-items:baseline;gap:.6rem}
+#barra-carrega{max-width:1200px;margin:1rem auto;padding:1.4rem 1.5rem;text-align:center}
+#barra-carrega .bc-text{font-family:'Cinzel',serif;font-weight:600;font-size:1.05rem;letter-spacing:.08em;color:var(--c-musicals);margin-bottom:.7rem;text-transform:uppercase}
+#barra-carrega .bc-pista{height:10px;background:var(--vora);border-radius:20px;overflow:hidden;max-width:380px;margin:0 auto}
+#barra-carrega .bc-omple{height:100%;width:0%;background:var(--c-musicals);border-radius:20px;transition:width .25s ease}
+#barra-carrega .bc-pct{font-family:'Outfit',sans-serif;font-size:.82rem;color:var(--gris);margin-top:.5rem}
+#barra-carrega.amagat{display:none}
+/* mentre es descarrega, els filtres queden atenuats i no clicables */
+body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:grayscale(.3)}
 .barra-res .compte{font-family:'Cinzel',serif;font-weight:700;font-size:1.5rem}
 .barra-res .et{color:var(--gris);font-weight:300}
 .barra-res .netejar{margin-left:auto;background:none;border:none;color:var(--c-esceniques);font-weight:600;
@@ -188,7 +196,13 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   <p>Descobreix què passa, quan i on</p>
 </header>
 
-<div class="cerca">
+<div id="barra-carrega">
+  <div class="bc-text">Descarregant l'agenda…</div>
+  <div class="bc-pista"><div class="bc-omple" id="bc-omple"></div></div>
+  <div class="bc-pct" id="bc-pct">0%</div>
+</div>
+
+<div class="cerca filtres-bloquejables">
   <input id="f-text" type="text" placeholder="Cerca un acte, un artista, un tema…">
 </div>
 
@@ -196,10 +210,10 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 <section class="bloc bloc-que">
   <div class="bloc-titol"><h2>Què</h2></div>
 </section>
-<div class="categories" id="categories"></div>
+<div class="categories filtres-bloquejables" id="categories"></div>
 
 <!-- QUAN -->
-<section class="bloc">
+<section class="bloc filtres-bloquejables">
   <div class="bloc-titol"><h2>Quan</h2></div>
   <div class="temps-botons">
     <button type="button" class="temps" data-temps="avui" style="background-image:url('avui.jpeg')"><span class="nom">Avui</span></button>
@@ -238,7 +252,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .cm-tip{position:absolute;transform:translate(-50%,-145%);background:#222;color:#fff;font-size:.8rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:3px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5}
 </style>
 <!-- ON -->
-<section class="bloc">
+<section class="bloc filtres-bloquejables">
   <div class="bloc-titol"><h2>On</h2></div>
   <div class="lloc-controls">
     <div id="mapa-comarques">
@@ -513,79 +527,142 @@ function provaImatgePropia(el, url, msTimeout){
 let mapa, capaMarcadors;
 
 // ---- carregar actes ----
-async function carregaActes(){
-  $("#estat-llista").textContent="Carregant…";
+// ===== NOVA ARQUITECTURA: càrrega única + filtratge local =====
+// Tots els actes futurs es baixen UN COP a window._totsActes.
+// Després, filtrar és instantani (en local), i només es repinta la visualització.
 
-  const cats = [...seleccionades];
-  const text = $("#f-text").value.trim();
-  const desde = $("#f-desde").value;
-  const fins = $("#f-fins").value;
+const CAMPS_LLISTA = "id,nom,data_inici,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
+
+// baixa tots els actes futurs per lots, omplint la barra de progrés
+async function carregaTotsElsActes(){
   const avui = new Date().toISOString().slice(0,10);
+  const omple = $("#bc-omple");
+  const pct = $("#bc-pct");
+  const barra = document.getElementById("barra-carrega");
+  document.body.classList.add("carregant");   // bloqueja els filtres
 
-  function fesConsulta(){
-    let q = sb.from("actes_publicada").select("*").order("data_inici",{ascending:true});
-    if(text){
-      const t = text.replaceAll(",", " ").trim();
-      q = q.or(`nom.ilike.%${t}%,descripcio_net.ilike.%${t}%,artistes.ilike.%${t}%,lloc_nom.ilike.%${t}%,a_saber.ilike.%${t}%`);
-    }
-    // filtre per comarques seleccionades al mapa (ids de la taula comarques)
-    if(comarquesSel.size){
-      const idsMun = (window._municipis||[])
-        .filter(m=>comarquesSel.has(String(m.comarca_id))).map(m=>m.id);
-      q = q.in("municipi_id", idsMun.length?idsMun:[-1]);
-    }
-    // filtre per municipi de geolocalització (només quan està actiu)
-    if(window._geoMunId){
-      q = q.eq("municipi_id", window._geoMunId);
-    }
-    // Mostra els actes ENCARA ACTIUS: que acaben avui o més tard, o (si no
-    // tenen data de fi) que comencen avui o més tard. Així s'inclouen també
-    // els que ja han començat però encara no s'han acabat (p.ex. exposicions).
-    const dataMin = desde || avui;
-    q = q.or(`data_fi.gte.${dataMin},and(data_fi.is.null,data_inici.gte.${dataMin})`);
-    if(fins) q = q.lte("data_inici", fins);
-    // categories: el camp jsonb conté parelles {categoria, subcategoria}.
-    // filtrem amb OR de "contains" per cada categoria seleccionada.
-    if(cats.length){
-      const ors = cats.map(c=>`categories.cs.${JSON.stringify([{categoria:c}])}`);
-      q = q.or(ors.join(","));
-    }
-    return q;
-  }
+  // 1) primer sabem QUANTS actes hi ha (per calcular el % de la barra)
+  const {count: total} = await sb.from("actes_publicada")
+    .select("id",{count:"exact",head:true})
+    .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
+  const totalActes = total || 0;
 
-  $("#estat-llista").textContent="";
   let totes = [];
   let desdeFila = 0;
-  const MIDA = 200;
-  let primerLot = true;
-  while(true){
-    const {data, error} = await fesConsulta().range(desdeFila, desdeFila + MIDA - 1);
-    if(error){
-      if(primerLot) $("#estat-llista").textContent="Error carregant les dades: "+error.message;
-      return;
-    }
-    if(!data || data.length===0) break;
+  const MIDA = 1000;
+  // llindar del "truc": en arribar al 80% real, mostrem 100%
+  const LLINDAR = 0.80;
 
+  function mostraPct(p){
+    const v = Math.min(100, Math.round(p*100));
+    omple.style.width = v + "%";
+    pct.textContent = v + "%";
+  }
+
+  while(true){
+    const {data, error} = await sb.from("actes_publicada")
+      .select(CAMPS_LLISTA)
+      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`)
+      .order("data_inici",{ascending:true})
+      .range(desdeFila, desdeFila + MIDA - 1);
+    if(error){ $("#estat-llista").textContent="Error carregant les dades: "+error.message; break; }
+    if(!data || data.length===0) break;
     totes = totes.concat(data);
-    // pinta aquest lot de seguida (el primer substitueix, la resta s'afegeixen)
-    pintaLlista(data, !primerLot);
-    primerLot = false;
-    // actualitza el comptador a mesura que entren
-    $("#compte").textContent = totes.length;
-    $("#et-res").textContent = totes.length===1?"acte trobat":"actes trobats";
+
+    // actualitza la barra (amb el truc del 80% -> 100%)
+    if(totalActes>0){
+      const frac = totes.length/totalActes;
+      mostraPct(frac>=LLINDAR ? 1 : (frac/LLINDAR));
+    }
 
     if(data.length < MIDA) break;
     desdeFila += MIDA;
     if(desdeFila > 200000) break;
   }
 
-  const actes = totes;
-  $("#compte").textContent = actes.length;
-  $("#et-res").textContent = actes.length===1?"acte trobat":"actes trobats";
-  // el mapa es pinta un sol cop, al final (recalcular-lo a cada lot seria lent)
-  pintaMapa(actes);
-  $("#estat-llista").textContent = actes.length?"":"No s'han trobat actes amb aquests filtres.";
+  window._totsActes = totes;
+  mostraPct(1);
+  // amaga la barra i DESBLOQUEJA els filtres
+  setTimeout(()=>{
+    barra.classList.add("amagat");
+    document.body.classList.remove("carregant");
+  }, 350);
+  return totes;
 }
+
+// === FILTRATGE EN LOCAL (instantani) ===
+// aplica tots els filtres actius sobre window._totsActes i pinta el resultat
+function aplicaFiltres(){
+  if(!window._totsActes){ return; }  // encara carregant
+  let res = window._totsActes;
+
+  // --- text de cerca (s'afegeix als altres) ---
+  const text = $("#f-text").value.trim().toLowerCase();
+  if(text){
+    const paraules = text.replaceAll(","," ").split(/\s+/).filter(Boolean);
+    res = res.filter(a=>{
+      const sac = ((a.nom||"")+" "+(a.descripcio_net||"")+" "+(a.artistes||"")+" "+(a.lloc_nom||"")).toLowerCase();
+      return paraules.every(p=>sac.includes(p));
+    });
+  }
+
+  // --- categories seleccionades (s'afegeix) ---
+  const cats = [...seleccionades];
+  if(cats.length){
+    res = res.filter(a=>{
+      const seves = (a.categories||[]).map(x=>x && x.categoria).filter(Boolean);
+      return cats.some(c=>seves.includes(c));
+    });
+  }
+
+  // --- geolocalització (municipi concret) o comarca (excloents entre elles) ---
+  if(window._geoMunId){
+    res = res.filter(a=>a.municipi_id===window._geoMunId);
+  } else if(comarquesSel.size){
+    const idsMun = new Set((window._municipis||[])
+      .filter(m=>comarquesSel.has(String(m.comarca_id))).map(m=>m.id));
+    res = res.filter(a=>idsMun.has(a.municipi_id));
+  }
+
+  // --- dates (des de / fins, també s'afegeix) ---
+  const desde = $("#f-desde").value;
+  const fins = $("#f-fins").value;
+  if(desde){ res = res.filter(a=>(a.data_inici||"") >= desde || (a.data_inici||"")===""); }
+  if(fins){ res = res.filter(a=>(a.data_inici||"") <= fins); }
+
+  // pinta el resultat
+  window._filtrats = res;
+  $("#compte").textContent = res.length;
+  $("#et-res").textContent = res.length===1?"acte trobat":"actes trobats";
+  pintaLlistaPaginada(res);
+  pintaMapa(res);
+  $("#estat-llista").textContent = res.length?"":"No s'han trobat actes amb aquests filtres.";
+}
+
+// compatibilitat amb crides antigues: carregaActes ara només filtra
+function carregaActes(){ aplicaFiltres(); }
+
+// === VISUALITZACIÓ PAGINADA (perquè pintar molts actes no encalli) ===
+let _pagina = 0;
+const PER_PAGINA = 60;
+function pintaLlistaPaginada(res){
+  _pagina = 0;
+  $("#graella").innerHTML = "";
+  mostraMesActes(res);
+}
+function mostraMesActes(res){
+  const inici = _pagina*PER_PAGINA;
+  const tros = res.slice(inici, inici+PER_PAGINA);
+  pintaLlista(tros, _pagina>0);
+  _pagina++;
+}
+// scroll infinit: quan s'arriba a baix, mostra més
+window.addEventListener("scroll", ()=>{
+  if(!window._filtrats) return;
+  if(_pagina*PER_PAGINA >= window._filtrats.length) return;  // ja estan tots
+  const aprop = window.innerHeight + window.scrollY >= document.body.offsetHeight - 600;
+  if(aprop) mostraMesActes(window._filtrats);
+});
 
 // ---- llista ----
 function pintaLlista(actes, afegir=false){
@@ -870,8 +947,9 @@ document.addEventListener("click",e=>{
 // ---- arrencada ----
 (async()=>{
   pintaCategories();
-  await carregaFiltres();
-  carregaActes();
+  await carregaFiltres();        // municipis, comarques, subcategories (per al mapa i imatges)
+  await carregaTotsElsActes();   // baixa TOTS els actes un cop (amb barra de progrés)
+  aplicaFiltres();               // primer pintat (sense filtres = tots)
 })();
 
 // ---- menú hamburguesa ----
