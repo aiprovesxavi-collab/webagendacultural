@@ -83,8 +83,8 @@ function categoriesActe(a){
   return [...c];
 }
 let SUB_IMG = {};
-function imatgeActe(a){
-  if(a.imatge) return a.imatge;
+// imatge de reserva (sempre al nostre servidor): subcategoria -> categoria -> altres
+function imatgeReserva(a){
   for(const p of (a.categories||[])){
     if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
       return "categoria/" + SUB_IMG[p.subcategoria];
@@ -93,6 +93,18 @@ function imatgeActe(a){
   const cats=categoriesActe(a);
   if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
   return "imatges/altres.jpg";
+}
+function imatgePropia(a){ return a.imatge || null; }
+function imatgeActe(a){ return imatgeReserva(a); }
+// prova la imatge pròpia (externa) amb límit de temps; si carrega, substitueix el fons
+function provaImatgePropia(el, url, msTimeout){
+  if(!url || !el) return;
+  const img = new Image();
+  let fet = false;
+  const timer = setTimeout(()=>{ if(!fet){ fet=true; img.src=""; } }, msTimeout||4000);
+  img.onload = ()=>{ if(!fet){ fet=true; clearTimeout(timer); el.style.backgroundImage = `url('${url}')`; } };
+  img.onerror = ()=>{ if(!fet){ fet=true; clearTimeout(timer); } };
+  img.src = url;
 }
 
 async function carrega(){
@@ -160,6 +172,9 @@ function pinta(a){
     ${enllacHtml}
     ${fontHtml}
   `;
+  // xarxa de seguretat: prova la imatge pròpia (externa); si falla/triga, queda la de reserva
+  const elFoto = document.querySelector(".foto-gran");
+  provaImatgePropia(elFoto, imatgePropia(a), 4000);
 }
 
 carrega();

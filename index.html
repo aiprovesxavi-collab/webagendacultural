@@ -391,15 +391,16 @@ function pintaCategories(){
 
 // ---- omplir comarca i municipi (a partir dels actes publicats) ----
 async function carregaFiltres(){
-  // municipis i comarques: els traiem de la taula municipis (per tenir noms oficials)
-  const {data: muns} = await sb.from("municipis").select("id,nom,comarca_id").order("nom");
-  const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
-  window._municipis = muns || [];
-  window._comarques = coms || [];
-  // mapa subcategoria(nom) -> fitxer d'imatge (per a la jerarquia d'imatges dels actes)
-  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  // municipis, comarques i subcategories EN PARAL·LEL (més ràpid que en sèrie)
+  const [rMuns, rComs, rSubs] = await Promise.all([
+    sb.from("municipis").select("id,nom,comarca_id").order("nom"),
+    sb.from("comarques").select("id,nom").order("nom"),
+    sb.from("subcategories").select("nom,imatge"),
+  ]);
+  window._municipis = rMuns.data || [];
+  window._comarques = rComs.data || [];
   window._subImg = {};
-  (subsImg||[]).forEach(s=>{ if(s.imatge) window._subImg[s.nom] = s.imatge; });
+  (rSubs.data||[]).forEach(s=>{ if(s.imatge) window._subImg[s.nom] = s.imatge; });
   // el filtre per comarca ara és el mapa clicable; no omplim cap <select>
   initMapaComarques();
 }
@@ -461,20 +462,36 @@ function detallActe(a){
   }
   return {txt: null, extra: preu};
 }
-// imatge: jerarquia pròpia -> subcategoria -> categoria -> altres
-function imatgeActe(a){
-  if(a.imatge) return a.imatge;
+// imatge de RESERVA (sempre al nostre servidor, carrega ràpid):
+// subcategoria -> categoria -> altres
+function imatgeReserva(a){
   const subImg = window._subImg || {};
-  // subcategoria amb imatge (carpeta categoria/)
   for(const p of (a.categories||[])){
     if(p && p.subcategoria && subImg[p.subcategoria]){
       return "categoria/" + subImg[p.subcategoria];
     }
   }
-  // si no, la de la categoria (botons, carpeta imatges/)
   const cats=categoriesActe(a);
   if(cats.length && imgCat[cats[0]]) return imgCat[cats[0]];
   return "imatges/altres.jpg";
+}
+// imatge PRÒPIA de l'acte (pot ser externa i fallar), o null
+function imatgePropia(a){ return a.imatge || null; }
+
+// compatibilitat: imatge inicial a mostrar = sempre la de reserva
+function imatgeActe(a){ return imatgeReserva(a); }
+
+// intenta carregar la imatge pròpia (externa) amb límit de temps;
+// si carrega bé dins el termini, posa-la com a fons de l'element;
+// si falla o triga massa, no fa res (queda la de reserva ja pintada).
+function provaImatgePropia(el, url, msTimeout){
+  if(!url) return;
+  const img = new Image();
+  let fet = false;
+  const timer = setTimeout(()=>{ if(!fet){ fet=true; img.src=""; } }, msTimeout||4000);
+  img.onload = ()=>{ if(!fet){ fet=true; clearTimeout(timer); el.style.backgroundImage = `url('${url}')`; } };
+  img.onerror = ()=>{ if(!fet){ fet=true; clearTimeout(timer); } };
+  img.src = url;
 }
 
 let mapa, capaMarcadors;
@@ -577,6 +594,9 @@ function pintaLlista(actes, afegir=false){
       </div>`;
     t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
     g.appendChild(t);
+    // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
+    const elFoto = t.querySelector(".foto");
+    provaImatgePropia(elFoto, imatgePropia(a), 4000);
   });
 }
 
