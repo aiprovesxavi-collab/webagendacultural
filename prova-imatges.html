@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prova d'imatges de subcategoria</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,sans-serif;background:#fafafa;color:#16130f;padding:1.5rem}
+h1{font-size:1.4rem;margin-bottom:.4rem}
+.resum{margin-bottom:1.5rem;padding:.8rem 1rem;border-radius:10px;background:#fff;border:1px solid #ececec;font-size:.95rem}
+.resum b{font-size:1.1rem}
+.ok{color:#1aa179}
+.err{color:#d23f3f}
+.graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.card{background:#fff;border:1px solid #ececec;border-radius:12px;overflow:hidden}
+.card .img{width:100%;aspect-ratio:16/9;background:#f0f0f0;background-size:cover;background-position:center;
+  display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.85rem;position:relative}
+.card .info{padding:.6rem .8rem}
+.card .sub{font-weight:600;font-size:.9rem}
+.card .cat{color:#888;font-size:.78rem}
+.card .fitxer{font-family:monospace;font-size:.75rem;color:#555;margin-top:.3rem;word-break:break-all}
+.card.fallida{border-color:#f3b4b4;background:#fff5f5}
+.card.fallida .fitxer{color:#d23f3f;font-weight:600}
+.badge{position:absolute;top:6px;right:6px;font-size:.7rem;padding:.15rem .5rem;border-radius:20px;font-weight:700}
+.badge.ok{background:#e9f9f0;color:#1aa179}
+.badge.err{background:#fde8e8;color:#d23f3f}
+</style>
+</head>
+<body>
+
+<h1>Prova d'imatges de subcategoria</h1>
+<div class="resum" id="resum">Carregant subcategories…</div>
+<div class="graella" id="graella"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
+<script>
+const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
+
+// CARPETA on són les imatges de subcategoria
+const BASE = "categoria/";
+
+let totals = 0, ok = 0, err = 0;
+function actualitzaResum(){
+  document.getElementById("resum").innerHTML =
+    `Total: <b>${totals}</b> &nbsp;·&nbsp; <span class="ok">Carreguen bé: <b>${ok}</b></span> &nbsp;·&nbsp; <span class="err">Fallen: <b>${err}</b></span>`;
+}
+
+async function carrega(){
+  const {data:cats} = await sb.from("categories").select("id,nom").order("nom");
+  const {data:subs, error} = await sb.from("subcategories").select("nom,categoria_id,imatge").order("nom");
+  if(error || !subs){ document.getElementById("resum").textContent = "Error carregant subcategories."; return; }
+
+  const catNom = {};
+  (cats||[]).forEach(c=>catNom[c.id]=c.nom);
+
+  totals = subs.length;
+  actualitzaResum();
+
+  const g = document.getElementById("graella");
+  subs.forEach(s=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    const url = BASE + (s.imatge || "");
+    card.innerHTML = `
+      <div class="img" data-url="${url}">sense imatge a la BD</div>
+      <div class="info">
+        <div class="sub">${s.nom}</div>
+        <div class="cat">${catNom[s.categoria_id]||"—"}</div>
+        <div class="fitxer">${s.imatge || "(buit)"}</div>
+      </div>`;
+    g.appendChild(card);
+
+    if(s.imatge){
+      // comprova si la imatge carrega
+      const test = new Image();
+      const imgDiv = card.querySelector(".img");
+      test.onload = ()=>{
+        imgDiv.style.backgroundImage = `url('${url}')`;
+        imgDiv.textContent = "";
+        imgDiv.insertAdjacentHTML("beforeend", '<span class="badge ok">OK</span>');
+        ok++; actualitzaResum();
+      };
+      test.onerror = ()=>{
+        card.classList.add("fallida");
+        imgDiv.textContent = "NO CARREGA";
+        imgDiv.insertAdjacentHTML("beforeend", '<span class="badge err">404</span>');
+        err++; actualitzaResum();
+      };
+      test.src = url;
+    } else {
+      card.classList.add("fallida");
+      err++; actualitzaResum();
+    }
+  });
+}
+carrega();
+</script>
+</body>
+</html>
