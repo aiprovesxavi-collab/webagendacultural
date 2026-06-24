@@ -82,8 +82,14 @@ function categoriesActe(a){
   (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
 }
+let SUB_IMG = {};
 function imatgeActe(a){
   if(a.imatge) return a.imatge;
+  for(const p of (a.categories||[])){
+    if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
+      return "categoria/" + SUB_IMG[p.subcategoria];
+    }
+  }
   const cats=categoriesActe(a);
   if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
   return "imatges/altres.jpg";
@@ -100,6 +106,10 @@ async function carrega(){
     document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha trobat l\'acte.</div>';
     return;
   }
+  // carrega el mapa de subcategories (imatge) abans de pintar
+  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  SUB_IMG = {};
+  (subsImg||[]).forEach(s=>{ if(s.imatge) SUB_IMG[s.nom] = s.imatge; });
   pinta(data);
 }
 

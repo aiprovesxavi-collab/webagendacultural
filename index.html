@@ -396,6 +396,10 @@ async function carregaFiltres(){
   const {data: coms} = await sb.from("comarques").select("id,nom").order("nom");
   window._municipis = muns || [];
   window._comarques = coms || [];
+  // mapa subcategoria(nom) -> fitxer d'imatge (per a la jerarquia d'imatges dels actes)
+  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  window._subImg = {};
+  (subsImg||[]).forEach(s=>{ if(s.imatge) window._subImg[s.nom] = s.imatge; });
   // el filtre per comarca ara és el mapa clicable; no omplim cap <select>
   initMapaComarques();
 }
@@ -457,9 +461,17 @@ function detallActe(a){
   }
   return {txt: null, extra: preu};
 }
-// imatge: si en té, la seva; si no, la de la categoria (per als de Barcelona)
+// imatge: jerarquia pròpia -> subcategoria -> categoria -> altres
 function imatgeActe(a){
   if(a.imatge) return a.imatge;
+  const subImg = window._subImg || {};
+  // subcategoria amb imatge (carpeta categoria/)
+  for(const p of (a.categories||[])){
+    if(p && p.subcategoria && subImg[p.subcategoria]){
+      return "categoria/" + subImg[p.subcategoria];
+    }
+  }
+  // si no, la de la categoria (botons, carpeta imatges/)
   const cats=categoriesActe(a);
   if(cats.length && imgCat[cats[0]]) return imgCat[cats[0]];
   return "imatges/altres.jpg";
