@@ -523,21 +523,15 @@ function detallActe(a){
   return {txt: null, extra: preu};
 }
 // imatge de RESERVA (sempre al nostre servidor, carrega ràpid):
-// subcategoria -> foto del gènere -> altres
+// subcategoria (carpeta imatges/) -> altres
 function imatgeReserva(a){
   const subImg = window._subImg || {};
   for(const p of (a.categories||[])){
     if(p && p.subcategoria && subImg[p.subcategoria]){
-      return "categoria/" + subImg[p.subcategoria];
+      return "imatges/" + subImg[p.subcategoria];
     }
   }
-  // si no, la foto del primer gènere que tingui l'acte
-  const gens = generesActe(a);
-  if(gens.length){
-    const g = CATS.find(c=>c.etiqueta===gens[0]);
-    if(g) return g.img;
-  }
-  return "imatges/altresmusica.jpg";
+  return "imatges/altres.jpg";
 }
 // imatge PRÒPIA de l'acte (pot ser externa i fallar), o null
 function imatgePropia(a){ return a.imatge || null; }
