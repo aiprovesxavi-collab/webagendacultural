@@ -83,23 +83,15 @@ function categoriesActe(a){
   return [...c];
 }
 let SUB_IMG = {};
-// imatge de reserva (sempre al nostre servidor): subcategoria musical -> categoria -> altres
+// imatge de reserva: subcategoria MUSICAL (per categoria|subcategoria) -> altresmusica
 function imatgeReserva(a){
-  // prioritza la subcategoria de la categoria "Arts musicals"
   for(const p of (a.categories||[])){
-    if(p && p.categoria==="Arts musicals" && p.subcategoria && SUB_IMG[p.subcategoria]){
-      return "imatges/" + SUB_IMG[p.subcategoria];
+    if(p && p.categoria==="Arts musicals" && p.subcategoria){
+      const fitxer = SUB_IMG["Arts musicals|" + p.subcategoria];
+      if(fitxer) return "imatges/" + fitxer;
     }
   }
-  // si no, qualsevol subcategoria amb imatge
-  for(const p of (a.categories||[])){
-    if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
-      return "imatges/" + SUB_IMG[p.subcategoria];
-    }
-  }
-  const cats=categoriesActe(a);
-  if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
-  return "imatges/altres.jpg";
+  return "imatges/altresmusica.jpg";
 }
 function imatgePropia(a){ return a.imatge || null; }
 function imatgeActe(a){ return imatgeReserva(a); }
@@ -126,9 +118,19 @@ async function carrega(){
     return;
   }
   // carrega el mapa de subcategories (imatge) abans de pintar
-  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  // carrega subcategories i categories (per creuar-les sense joins)
+  const [rSubs, rCats] = await Promise.all([
+    sb.from("subcategories").select("nom,imatge,categoria_id"),
+    sb.from("categories").select("id,nom"),
+  ]);
+  const catPerId = {};
+  (rCats.data||[]).forEach(c=>{ catPerId[c.id]=c.nom; });
   SUB_IMG = {};
-  (subsImg||[]).forEach(s=>{ if(s.imatge) SUB_IMG[s.nom] = s.imatge; });
+  (rSubs.data||[]).forEach(s=>{
+    if(!s.imatge) return;
+    const catNom = catPerId[s.categoria_id] || "";
+    SUB_IMG[catNom + "|" + s.nom] = s.imatge;
+  });
   pinta(data);
 }
 

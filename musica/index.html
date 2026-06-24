@@ -452,15 +452,23 @@ function generesActe(a){
 // ---- omplir comarca i municipi (a partir dels actes publicats) ----
 async function carregaFiltres(){
   // municipis, comarques i subcategories EN PARAL·LEL (més ràpid que en sèrie)
-  const [rMuns, rComs, rSubs] = await Promise.all([
+  const [rMuns, rComs, rSubs, rCats] = await Promise.all([
     sb.from("municipis").select("id,nom,comarca_id,latitud,longitud").order("nom"),
     sb.from("comarques").select("id,nom").order("nom"),
-    sb.from("subcategories").select("nom,imatge"),
+    sb.from("subcategories").select("nom,imatge,categoria_id"),
+    sb.from("categories").select("id,nom"),
   ]);
   window._municipis = rMuns.data || [];
   window._comarques = rComs.data || [];
+  // Mapa indexat per "categoria|subcategoria" perquè els "Altres" no es trepitgin.
+  const catPerId = {};
+  (rCats.data||[]).forEach(c=>{ catPerId[c.id]=c.nom; });
   window._subImg = {};
-  (rSubs.data||[]).forEach(s=>{ if(s.imatge) window._subImg[s.nom] = s.imatge; });
+  (rSubs.data||[]).forEach(s=>{
+    if(!s.imatge) return;
+    const catNom = catPerId[s.categoria_id] || "";
+    window._subImg[catNom + "|" + s.nom] = s.imatge;
+  });
   // el filtre per comarca ara és el mapa clicable; no omplim cap <select>
   initMapaComarques();
 }
@@ -522,18 +530,16 @@ function detallActe(a){
   }
   return {txt: null, extra: preu};
 }
-// imatge de RESERVA (sempre al nostre servidor, carrega ràpid):
-// subcategoria MUSICAL (carpeta imatges/) -> altres
+// imatge de RESERVA: subcategoria MUSICAL (per categoria|subcategoria) -> altresmusica
 function imatgeReserva(a){
   const subImg = window._subImg || {};
-  // busca NOMÉS la subcategoria de la categoria "Arts musicals"
-  // (un acte pot tenir subcategories d'altres categories que aquí no toquen)
   for(const p of (a.categories||[])){
-    if(p && p.categoria==="Arts musicals" && p.subcategoria && subImg[p.subcategoria]){
-      return "imatges/" + subImg[p.subcategoria];
+    if(p && p.categoria==="Arts musicals" && p.subcategoria){
+      const fitxer = subImg["Arts musicals|" + p.subcategoria];
+      if(fitxer) return "imatges/" + fitxer;
     }
   }
-  return "imatges/altres.jpg";
+  return "imatges/altresmusica.jpg";
 }
 // imatge PRÒPIA de l'acte (pot ser externa i fallar), o null
 function imatgePropia(a){ return a.imatge || null; }
