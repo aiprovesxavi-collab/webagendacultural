@@ -237,11 +237,24 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
   box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s}
 #geo-boto:hover{border-color:var(--c-musicals);color:var(--c-musicals)}
 #geo-boto:disabled{opacity:.6;cursor:default}
-#geo-resultat{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
-.geo-chip{border:1.5px solid var(--vora);background:var(--fons);border-radius:30px;padding:.5rem 1rem;
-  cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--tinta);transition:all .2s}
-.geo-chip:hover{border-color:var(--c-musicals);color:var(--c-musicals);background:#fff7ef}
-.geo-chip.prop{font-weight:500;font-size:.85rem;color:var(--gris)}
+#geo-resultat{display:flex;flex-wrap:wrap;gap:.6rem;justify-content:center;width:100%}
+/* botó del municipi: estil com els de temps (Avui/Demà) però una mica més llarg */
+.geo-chip{position:relative;overflow:hidden;cursor:pointer;border:none;height:var(--h-temps,90px);
+  min-width:240px;max-width:420px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  background-image:url('poble.jpg');background-size:cover;background-position:center;background-color:#3a4a24;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s}
+.geo-chip::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.42);transition:background .3s}
+.geo-chip:hover::after{background:rgba(0,0,0,.26)}
+.geo-chip .nom{position:relative;z-index:2;color:#fff;font-family:'Cinzel',serif;font-weight:600;
+  font-size:clamp(1.1rem,2.2vw,1.7rem);letter-spacing:.12em;text-transform:uppercase;line-height:1.1;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);padding:0 1rem}
+.geo-chip.actiu::after{background:color-mix(in srgb, var(--c-musicals) 70%, transparent)}
+.geo-chip.actiu{box-shadow:0 0 0 4px var(--c-musicals), 0 6px 18px rgba(240,130,10,.45);transform:translateY(-3px)}
+@media(max-width:760px){
+  .geo-chip{height:64px;min-width:200px}
+  .geo-chip .nom{font-size:clamp(.85rem,4vw,1.3rem);letter-spacing:.06em}
+}
 .geo-info{font-size:.85rem;color:var(--gris);text-align:center}
 #mapacat{width:70%;min-width:300px;max-width:460px;height:auto;display:block;margin:0 auto}
 #mapacat .cm{stroke:#fff;stroke-width:1.1;cursor:pointer;transition:opacity .15s,filter .15s}
@@ -909,21 +922,21 @@ async function activaGeo(){
         boto.disabled=false; boto.textContent="📍 A prop meu"; return;
       }
       const meu = propers[0];
-      // comptar quants actes futurs té el meu municipi
+      // comptar quants actes futurs té el meu municipi (per saber si cal oferir-ne un de proper)
       const avui = new Date().toISOString().slice(0,10);
       const {count} = await sb.from("actes_publicada")
         .select("id",{count:"exact",head:true})
         .eq("municipi_id", meu.id)
         .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
 
-      // botó del meu municipi (encara que tingui 0 actes)
-      let html = `<button type="button" class="geo-chip" data-mun="${meu.id}">📍 ${meu.nom}${count?` (${count})`:" (0)"}</button>`;
+      // botó del meu municipi: estil gran, NOMÉS el nom (sense número)
+      let html = `<button type="button" class="geo-chip" data-mun="${meu.id}"><span class="nom">${meu.nom}</span></button>`;
 
       // si el meu municipi té 0 actes, oferim el més proper AMB actes
       if(!count){
         const propAmbActes = await primerMunicipiAmbActes(propers, avui, meu.id);
         if(propAmbActes){
-          html += `<button type="button" class="geo-chip prop" data-mun="${propAmbActes.id}">i a prop: ${propAmbActes.nom} (${propAmbActes.count}) ↗</button>`;
+          html += `<button type="button" class="geo-chip prop" data-mun="${propAmbActes.id}"><span class="nom">i a prop: ${propAmbActes.nom} ↗</span></button>`;
         }
       }
       res.innerHTML = html;
@@ -951,10 +964,16 @@ async function primerMunicipiAmbActes(propers, avui, exclouId){
 }
 // clics als botons de geolocalització
 document.addEventListener("click",e=>{
-  if(e.target && e.target.id==="geo-boto"){ activaGeo(); }
-  if(e.target && e.target.classList && e.target.classList.contains("geo-chip")){
-    const munId = e.target.getAttribute("data-mun");
-    if(munId) filtraPerMunicipi(+munId);
+  if(e.target && e.target.id==="geo-boto"){ activaGeo(); return; }
+  const chip = e.target.closest ? e.target.closest(".geo-chip") : null;
+  if(chip){
+    const munId = chip.getAttribute("data-mun");
+    if(munId){
+      // marca aquest botó com a actiu (taronja) i desmarca els altres
+      document.querySelectorAll(".geo-chip.actiu").forEach(b=>b.classList.remove("actiu"));
+      chip.classList.add("actiu");
+      filtraPerMunicipi(+munId);
+    }
   }
 });
 
