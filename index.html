@@ -64,6 +64,8 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .capcalera h1{font-family:'Cinzel',serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:.06em;line-height:1.1;text-transform:uppercase}
 .capcalera h1 em{font-style:normal;font-weight:400;display:block;font-size:.55em;letter-spacing:.12em;color:var(--gris);margin-top:.4rem}
 .capcalera p{color:var(--gris);font-size:1.15rem;margin-top:.6rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500}
+.capcalera p .ressalta{font-family:'Cinzel',serif;font-style:normal;font-weight:700;font-size:1.35em;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta);cursor:pointer;text-decoration:none;transition:color .2s}
+.capcalera p .ressalta:hover{color:var(--c-musicals)}
 
 .bloc{max-width:1200px;margin:0 auto;padding:1.6rem 1.5rem}
 .bloc-titol{display:flex;flex-direction:column;align-items:center;gap:.2rem;margin-bottom:1.1rem;text-align:center}
@@ -194,7 +196,7 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 
 <header class="capcalera">
   <h1>Agenda Cultural <em>de Catalunya</em></h1>
-  <p>Descobreix què passa, quan i on</p>
+  <p>Descobreix <a class="ressalta" data-scroll="sec-que">què</a> passa, <a class="ressalta" data-scroll="sec-quan">quan</a> i <a class="ressalta" data-scroll="sec-on">on</a></p>
 </header>
 
 <div id="barra-carrega">
@@ -208,13 +210,13 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 </div>
 
 <!-- QUÈ -->
-<section class="bloc bloc-que">
+<section class="bloc bloc-que" id="sec-que">
   <div class="bloc-titol"><h2>Què</h2></div>
 </section>
 <div class="categories filtres-bloquejables" id="categories"></div>
 
 <!-- QUAN -->
-<section class="bloc filtres-bloquejables">
+<section class="bloc filtres-bloquejables" id="sec-quan">
   <div class="bloc-titol"><h2>Quan</h2></div>
   <div class="temps-botons">
     <button type="button" class="temps" data-temps="avui" style="background-image:url('avui.jpeg')"><span class="nom">Avui</span></button>
@@ -266,7 +268,7 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 .cm-tip{position:absolute;transform:translate(-50%,-145%);background:#222;color:#fff;font-size:.8rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:3px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5}
 </style>
 <!-- ON -->
-<section class="bloc filtres-bloquejables">
+<section class="bloc filtres-bloquejables" id="sec-on">
   <div class="bloc-titol"><h2>On</h2></div>
   <div class="lloc-controls">
     <div id="mapa-comarques">
@@ -964,6 +966,13 @@ async function primerMunicipiAmbActes(propers, avui, exclouId){
 }
 // clics als botons de geolocalització
 document.addEventListener("click",e=>{
+  // scroll suau des de les paraules del subtítol (Què/Quan/On) cap a la seva secció
+  const ress = e.target.closest ? e.target.closest(".ressalta") : null;
+  if(ress && ress.dataset.scroll){
+    const sec = document.getElementById(ress.dataset.scroll);
+    if(sec) sec.scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
   if(e.target && e.target.id==="geo-boto"){ activaGeo(); return; }
   const chip = e.target.closest ? e.target.closest(".geo-chip") : null;
   if(chip){
