@@ -216,6 +216,18 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 #mapa-comarques{position:relative;width:100%;max-width:560px;margin:0 auto}
 #mapa-comarques .mapa-ajuda{font-size:.85rem;color:#666;margin-bottom:6px;text-align:center}
 #mapa-comarques #netcomarques{border:1px solid #ccc;background:#fff;border-radius:14px;padding:2px 10px;cursor:pointer;font-size:.8rem;margin-left:6px}
+#geo-zona{width:100%;display:flex;flex-direction:column;align-items:center;gap:.5rem;margin-top:.8rem}
+#geo-boto{border:1.5px solid var(--vora);background:var(--paper);border-radius:30px;padding:.55rem 1.2rem;
+  cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;font-size:.92rem;color:var(--tinta);
+  box-shadow:0 2px 8px rgba(0,0,0,.06);transition:all .2s}
+#geo-boto:hover{border-color:var(--c-musicals);color:var(--c-musicals)}
+#geo-boto:disabled{opacity:.6;cursor:default}
+#geo-resultat{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center}
+.geo-chip{border:1.5px solid var(--vora);background:var(--fons);border-radius:30px;padding:.5rem 1rem;
+  cursor:pointer;font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--tinta);transition:all .2s}
+.geo-chip:hover{border-color:var(--c-musicals);color:var(--c-musicals);background:#fff7ef}
+.geo-chip.prop{font-weight:500;font-size:.85rem;color:var(--gris)}
+.geo-info{font-size:.85rem;color:var(--gris);text-align:center}
 #mapacat{width:70%;min-width:300px;max-width:460px;height:auto;display:block;margin:0 auto}
 #mapacat .cm{stroke:#fff;stroke-width:1.1;cursor:pointer;transition:opacity .15s,filter .15s}
 #mapacat .cm:hover{filter:brightness(1.12)}
@@ -316,6 +328,10 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 </svg>
       <div id="cm-tip" class="cm-tip"></div>
     </div>
+    <div id="geo-zona">
+      <button type="button" id="geo-boto">📍 A prop meu</button>
+      <div id="geo-resultat"></div>
+    </div>
     <div class="toggle-mapa">
       <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
       <button id="t-mapa" data-vista="mapa">Mapa</button>
@@ -393,7 +409,7 @@ function pintaCategories(){
 async function carregaFiltres(){
   // municipis, comarques i subcategories EN PARAL·LEL (més ràpid que en sèrie)
   const [rMuns, rComs, rSubs] = await Promise.all([
-    sb.from("municipis").select("id,nom,comarca_id").order("nom"),
+    sb.from("municipis").select("id,nom,comarca_id,latitud,longitud").order("nom"),
     sb.from("comarques").select("id,nom").order("nom"),
     sb.from("subcategories").select("nom,imatge"),
   ]);
@@ -517,6 +533,10 @@ async function carregaActes(){
       const idsMun = (window._municipis||[])
         .filter(m=>comarquesSel.has(String(m.comarca_id))).map(m=>m.id);
       q = q.in("municipi_id", idsMun.length?idsMun:[-1]);
+    }
+    // filtre per municipi de geolocalització (només quan està actiu)
+    if(window._geoMunId){
+      q = q.eq("municipi_id", window._geoMunId);
     }
     // Mostra els actes ENCARA ACTIUS: que acaben avui o més tard, o (si no
     // tenen data de fi) que comencen avui o més tard. Així s'inclouen també
@@ -741,6 +761,8 @@ function initMapaComarques(){
     p.addEventListener("click",e=>{
       if(!p.dataset.comid){ mostraTip(nom(),e.clientX,e.clientY); return; }
       const id=p.dataset.comid;
+      // si hi havia filtre de geolocalització, el traiem (no barregem)
+      if(window._geoMunId){ window._geoMunId=null; document.getElementById("geo-resultat").innerHTML=""; }
       if(comarquesSel.has(id)){ comarquesSel.delete(id); p.classList.remove("sel"); }
       else { comarquesSel.add(id); p.classList.add("sel"); }
       actualitzaDimMapa(); mostraTip(nom(),e.clientX,e.clientY); carregaActes();
@@ -753,7 +775,96 @@ function esborraComarques(){
   actualitzaDimMapa(); amagaTip();
 }
 document.addEventListener("click",e=>{
-  if(e.target && e.target.id==="netcomarques"){ esborraComarques(); carregaActes(); }
+  if(e.target && e.target.id==="netcomarques"){ window._geoMunId=null; document.getElementById("geo-resultat").innerHTML=""; esborraComarques(); carregaActes(); }
+});
+
+// ---- geolocalització: "a prop meu" ----
+// distància aproximada (km) entre dos punts lat/lng (fórmula de Haversine)
+function distKm(lat1,lon1,lat2,lon2){
+  const R=6371, rad=Math.PI/180;
+  const dLat=(lat2-lat1)*rad, dLon=(lon2-lon1)*rad;
+  const a=Math.sin(dLat/2)**2 + Math.cos(lat1*rad)*Math.cos(lat2*rad)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+// municipis ordenats per proximitat a unes coordenades
+function municipisOrdenatsPerProximitat(lat,lng){
+  return (window._municipis||[])
+    .filter(m=>m.latitud!=null && m.longitud!=null)
+    .map(m=>({...m, dist: distKm(lat,lng, +m.latitud, +m.longitud)}))
+    .sort((a,b)=>a.dist-b.dist);
+}
+// filtra la llista pel municipi triat (per geolocalització)
+function filtraPerMunicipi(munId, munNom){
+  window._geoMunId = munId;
+  // en activar geolocalització, traiem el filtre de comarca per no barrejar
+  esborraComarques();
+  carregaActes();
+}
+async function activaGeo(){
+  const boto = document.getElementById("geo-boto");
+  const res = document.getElementById("geo-resultat");
+  if(!navigator.geolocation){
+    res.innerHTML = '<div class="geo-info">El teu navegador no permet geolocalització.</div>';
+    return;
+  }
+  boto.disabled = true;
+  boto.textContent = "📍 Cercant…";
+  navigator.geolocation.getCurrentPosition(
+    async (pos)=>{
+      const {latitude:lat, longitude:lng} = pos.coords;
+      const propers = municipisOrdenatsPerProximitat(lat,lng);
+      if(!propers.length){
+        res.innerHTML = '<div class="geo-info">No s\'ha pogut determinar el municipi.</div>';
+        boto.disabled=false; boto.textContent="📍 A prop meu"; return;
+      }
+      const meu = propers[0];
+      // comptar quants actes futurs té el meu municipi
+      const avui = new Date().toISOString().slice(0,10);
+      const {count} = await sb.from("actes_publicada")
+        .select("id",{count:"exact",head:true})
+        .eq("municipi_id", meu.id)
+        .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
+
+      // botó del meu municipi (encara que tingui 0 actes)
+      let html = `<button type="button" class="geo-chip" data-mun="${meu.id}">📍 ${meu.nom}${count?` (${count})`:" (0)"}</button>`;
+
+      // si el meu municipi té 0 actes, oferim el més proper AMB actes
+      if(!count){
+        const propAmbActes = await primerMunicipiAmbActes(propers, avui, meu.id);
+        if(propAmbActes){
+          html += `<button type="button" class="geo-chip prop" data-mun="${propAmbActes.id}">i a prop: ${propAmbActes.nom} (${propAmbActes.count}) ↗</button>`;
+        }
+      }
+      res.innerHTML = html;
+      boto.disabled=false; boto.textContent="📍 A prop meu";
+    },
+    (err)=>{
+      res.innerHTML = '<div class="geo-info">No has donat permís d\'ubicació.</div>';
+      boto.disabled=false; boto.textContent="📍 A prop meu";
+    },
+    {enableHighAccuracy:false, timeout:8000, maximumAge:300000}
+  );
+}
+// busca, entre els municipis més propers, el primer que tingui actes futurs
+async function primerMunicipiAmbActes(propers, avui, exclouId){
+  // mirem els 15 més propers per no fer massa consultes
+  for(const m of propers.slice(0,15)){
+    if(m.id===exclouId) continue;
+    const {count} = await sb.from("actes_publicada")
+      .select("id",{count:"exact",head:true})
+      .eq("municipi_id", m.id)
+      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
+    if(count){ return {...m, count}; }
+  }
+  return null;
+}
+// clics als botons de geolocalització
+document.addEventListener("click",e=>{
+  if(e.target && e.target.id==="geo-boto"){ activaGeo(); }
+  if(e.target && e.target.classList && e.target.classList.contains("geo-chip")){
+    const munId = e.target.getAttribute("data-mun");
+    if(munId) filtraPerMunicipi(+munId);
+  }
 });
 
 // ---- arrencada ----
