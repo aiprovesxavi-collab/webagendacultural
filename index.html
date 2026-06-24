@@ -968,8 +968,14 @@ document.addEventListener("click",e=>{
   const chip = e.target.closest ? e.target.closest(".geo-chip") : null;
   if(chip){
     const munId = chip.getAttribute("data-mun");
-    if(munId){
-      // marca aquest botó com a actiu (taronja) i desmarca els altres
+    if(!munId) return;
+    if(chip.classList.contains("actiu")){
+      // ja estava marcat -> el desmarquem i traiem el filtre (tornen tots els actes)
+      chip.classList.remove("actiu");
+      window._geoMunId = null;
+      aplicaFiltres();
+    } else {
+      // el marquem (taronja), desmarcant els altres, i filtrem pel municipi
       document.querySelectorAll(".geo-chip.actiu").forEach(b=>b.classList.remove("actiu"));
       chip.classList.add("actiu");
       filtraPerMunicipi(+munId);
