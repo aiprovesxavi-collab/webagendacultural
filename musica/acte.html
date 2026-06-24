@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acte · Agenda Musical de Catalunya</title>
+<title>Acte · Agenda Cultural de Catalunya</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -50,12 +50,21 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
   <div id="contingut"><div class="estat">Carregant l'acte…</div></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8"></script>
 <script>
 const SUPABASE_URL = "https://gdxucdxoclgrcjtciggs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkeHVjZHhvY2xncmNqdGNpZ2dzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxNDg1MTksImV4cCI6MjA5NTcyNDUxOX0.DSsGzop1xXmMY1ztYTr9cPWOi_KPcRZN0ze_rP5pYqs";
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+});
 
+const IMG_CAT = {
+  "Arts escèniques":"imatges/esceniques.jpg","Dansa":"imatges/dansa.jpg",
+  "Arts musicals":"imatges/musicals.jpg","Arts plàstiques":"imatges/plastiques.jpg",
+  "Cultura popular":"imatges/popular.jpg","Literatura":"imatges/literatura.jpg",
+  "Conferències":"imatges/conferencies.jpg","Cinema":"imatges/cinema.jpg",
+  "Formació":"imatges/formacio.jpg","Altres":"imatges/altres.jpg"
+};
 function fmtData(d){
   if(!d) return "Data per confirmar";
   return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
@@ -73,32 +82,29 @@ function categoriesActe(a){
   (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
   return [...c];
 }
-const CATS = [
-  {etiqueta:"POP",                         subs:["Pop"],                         img:"imatges/pop.jpg"},
-  {etiqueta:"ROCK",                        subs:["Rock"],                        img:"imatges/rock.jpg"},
-  {etiqueta:"SOUL, FUNK I R&B",            subs:["Soul, Funk i R&B"],            img:"imatges/funk2.jpg"},
-  {etiqueta:"JAZZ I BLUES",                subs:["Jazz i Blues"],                img:"imatges/jazz.jpg"},
-  {etiqueta:"ELECTRÒNICA",                 subs:["Electrònica"],                 img:"imatges/electronic2.jpg"},
-  {etiqueta:"URBANA",                      subs:["Urbana"],                      img:"imatges/hip2.jpg"},
-  {etiqueta:"MÚSICA LLATINA",              subs:["Música Llatina"],              img:"imatges/llatina.jpg"},
-  {etiqueta:"FLAMENC I RUMBA",             subs:["Flamenc i Rumba"],             img:"imatges/flamenc.jpg"},
-  {etiqueta:"MÚSICA TRADICIONAL CATALANA", subs:["Música Tradicional catalana"], img:"imatges/tradicional.jpg"},
-  {etiqueta:"FOLK I ARRELS",               subs:["Folk i Arrels"],               img:"imatges/country.jpg"},
-  {etiqueta:"MÚSIQUES DEL MÓN",            subs:["Músiques del Món"],            img:"imatges/ethnic.jpg"},
-  {etiqueta:"CLÀSSICA",                    subs:["Clàssica"],                    img:"imatges/classica.jpg"},
-  {etiqueta:"ALTRES",                      subs:["Altres"],                      img:"imatges/altresmusica.jpg"},
-];
-function subcatsMusicals(a){
-  const s=new Set();
-  (a.categories||[]).forEach(x=>{ if(x && x.categoria==="Arts musicals" && x.subcategoria) s.add(x.subcategoria); });
-  return [...s];
+let SUB_IMG = {};
+// imatge de reserva (sempre al nostre servidor): subcategoria -> categoria -> altres
+function imatgeReserva(a){
+  for(const p of (a.categories||[])){
+    if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
+      return "imatges/" + SUB_IMG[p.subcategoria];
+    }
+  }
+  const cats=categoriesActe(a);
+  if(cats.length && IMG_CAT[cats[0]]) return IMG_CAT[cats[0]];
+  return "imatges/altres.jpg";
 }
-function imatgeActe(a){
-  if(a.imatge) return a.imatge;
-  const subs = subcatsMusicals(a);
-  const gen = CATS.find(c => c.subs.some(sub => subs.includes(sub)));
-  if(gen) return gen.img;
-  return "imatges/musicals.jpg";
+function imatgePropia(a){ return a.imatge || null; }
+function imatgeActe(a){ return imatgeReserva(a); }
+// prova la imatge pròpia (externa) amb límit de temps; si carrega, substitueix el fons
+function provaImatgePropia(el, url, msTimeout){
+  if(!url || !el) return;
+  const img = new Image();
+  let fet = false;
+  const timer = setTimeout(()=>{ if(!fet){ fet=true; img.src=""; } }, msTimeout||4000);
+  img.onload = ()=>{ if(!fet){ fet=true; clearTimeout(timer); el.style.backgroundImage = `url('${url}')`; } };
+  img.onerror = ()=>{ if(!fet){ fet=true; clearTimeout(timer); } };
+  img.src = url;
 }
 
 async function carrega(){
@@ -112,11 +118,15 @@ async function carrega(){
     document.getElementById("contingut").innerHTML='<div class="estat">No s\'ha trobat l\'acte.</div>';
     return;
   }
+  // carrega el mapa de subcategories (imatge) abans de pintar
+  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  SUB_IMG = {};
+  (subsImg||[]).forEach(s=>{ if(s.imatge) SUB_IMG[s.nom] = s.imatge; });
   pinta(data);
 }
 
 function pinta(a){
-  document.title = (a.nom||"Acte") + " · Agenda Musical";
+  document.title = (a.nom||"Acte") + " · Agenda Cultural";
   const lloc=[a.lloc_nom, a.municipi||""].filter(Boolean).join(", ");
   const cats=categoriesActe(a);
 
@@ -140,11 +150,7 @@ function pinta(a){
   else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
   if(a.idioma) meta+=`<span class="chip">${a.idioma}</span>`;
   if(a.public_desti) meta+=`<span class="chip">${a.public_desti}</span>`;
-  // en aquesta web de música mostrem els GÈNERES (subcategories), no "Arts musicals".
-  // si hi ha algun gènere concret, no mostrem "Altres" (queda més net).
-  let generes = subcatsMusicals(a);
-  if(generes.length > 1) generes = generes.filter(s => s !== "Altres");
-  if(generes.length) meta+=`<span class="chip">${generes.join(" · ")}</span>`;
+  if(cats.length) meta+=`<span class="chip">${cats.join(" · ")}</span>`;
 
   const url = a.enllac;
   const enllacHtml = (url && url.startsWith("http"))
@@ -166,6 +172,9 @@ function pinta(a){
     ${enllacHtml}
     ${fontHtml}
   `;
+  // xarxa de seguretat: prova la imatge pròpia (externa); si falla/triga, queda la de reserva
+  const elFoto = document.querySelector(".foto-gran");
+  provaImatgePropia(elFoto, imatgePropia(a), 4000);
 }
 
 carrega();
