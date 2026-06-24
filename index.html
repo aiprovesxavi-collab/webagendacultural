@@ -111,8 +111,9 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .temps .nom{position:relative;z-index:2;color:#fff;font-family:'Cinzel',serif;font-weight:600;
   font-size:clamp(1.1rem,2.2vw,1.9rem);letter-spacing:.16em;text-transform:uppercase;line-height:1.1;
   text-shadow:0 2px 12px rgba(0,0,0,.5)}
-.temps.actiu::after{background:color-mix(in srgb, var(--c-musicals) 55%, rgba(0,0,0,.45))}
-.temps.actiu{box-shadow:inset 0 0 0 4px var(--c-musicals)}
+.temps.actiu::after{background:color-mix(in srgb, var(--c-musicals) 70%, transparent)}
+.temps.actiu{box-shadow:0 0 0 4px var(--c-musicals), 0 6px 18px rgba(240,130,10,.45);transform:translateY(-3px)}
+.temps.actiu .nom{text-shadow:0 2px 10px rgba(0,0,0,.7)}
 @media(max-width:760px){
   .temps-botons{--h-temps:64px;gap:.6rem}
   .temps .nom{font-size:clamp(.85rem,4vw,1.3rem);letter-spacing:.06em}
