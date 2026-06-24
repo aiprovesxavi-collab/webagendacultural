@@ -438,15 +438,24 @@ function pintaCategories(){
 // ---- omplir comarca i municipi (a partir dels actes publicats) ----
 async function carregaFiltres(){
   // municipis, comarques i subcategories EN PARAL·LEL (més ràpid que en sèrie)
-  const [rMuns, rComs, rSubs] = await Promise.all([
+  const [rMuns, rComs, rSubs, rCats] = await Promise.all([
     sb.from("municipis").select("id,nom,comarca_id,latitud,longitud").order("nom"),
     sb.from("comarques").select("id,nom").order("nom"),
-    sb.from("subcategories").select("nom,imatge"),
+    sb.from("subcategories").select("nom,imatge,categoria_id"),
+    sb.from("categories").select("id,nom"),
   ]);
   window._municipis = rMuns.data || [];
   window._comarques = rComs.data || [];
+  // Mapa indexat per "categoria|subcategoria" perquè els "Altres" no es trepitgin.
+  // Creuem subcategories amb categories per id (sense dependre de joins).
+  const catPerId = {};
+  (rCats.data||[]).forEach(c=>{ catPerId[c.id]=c.nom; });
   window._subImg = {};
-  (rSubs.data||[]).forEach(s=>{ if(s.imatge) window._subImg[s.nom] = s.imatge; });
+  (rSubs.data||[]).forEach(s=>{
+    if(!s.imatge) return;
+    const catNom = catPerId[s.categoria_id] || "";
+    window._subImg[catNom + "|" + s.nom] = s.imatge;
+  });
   // el filtre per comarca ara és el mapa clicable; no omplim cap <select>
   initMapaComarques();
 }
@@ -513,8 +522,9 @@ function detallActe(a){
 function imatgeReserva(a){
   const subImg = window._subImg || {};
   for(const p of (a.categories||[])){
-    if(p && p.subcategoria && subImg[p.subcategoria]){
-      return "categoria/" + subImg[p.subcategoria];
+    if(p && p.categoria && p.subcategoria){
+      const fitxer = subImg[p.categoria + "|" + p.subcategoria];
+      if(fitxer) return "categoria/" + fitxer;
     }
   }
   const cats=categoriesActe(a);

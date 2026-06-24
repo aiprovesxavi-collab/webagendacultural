@@ -86,8 +86,9 @@ let SUB_IMG = {};
 // imatge de reserva (sempre al nostre servidor): subcategoria -> categoria -> altres
 function imatgeReserva(a){
   for(const p of (a.categories||[])){
-    if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
-      return "categoria/" + SUB_IMG[p.subcategoria];
+    if(p && p.categoria && p.subcategoria){
+      const fitxer = SUB_IMG[p.categoria + "|" + p.subcategoria];
+      if(fitxer) return "categoria/" + fitxer;
     }
   }
   const cats=categoriesActe(a);
@@ -119,9 +120,19 @@ async function carrega(){
     return;
   }
   // carrega el mapa de subcategories (imatge) abans de pintar
-  const {data: subsImg} = await sb.from("subcategories").select("nom,imatge");
+  // carrega subcategories i categories (per creuar-les sense joins)
+  const [rSubs, rCats] = await Promise.all([
+    sb.from("subcategories").select("nom,imatge,categoria_id"),
+    sb.from("categories").select("id,nom"),
+  ]);
+  const catPerId = {};
+  (rCats.data||[]).forEach(c=>{ catPerId[c.id]=c.nom; });
   SUB_IMG = {};
-  (subsImg||[]).forEach(s=>{ if(s.imatge) SUB_IMG[s.nom] = s.imatge; });
+  (rSubs.data||[]).forEach(s=>{
+    if(!s.imatge) return;
+    const catNom = catPerId[s.categoria_id] || "";
+    SUB_IMG[catNom + "|" + s.nom] = s.imatge;
+  });
   pinta(data);
 }
 
