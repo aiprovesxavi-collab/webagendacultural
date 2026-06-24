@@ -539,25 +539,22 @@ async function carregaTotsElsActes(){
   const omple = $("#bc-omple");
   const pct = $("#bc-pct");
   const barra = document.getElementById("barra-carrega");
-  document.body.classList.add("carregant");   // bloqueja els filtres
+  document.body.classList.add("carregant");   // bloqueja els filtres FINS AL FINAL
 
-  // 1) primer sabem QUANTS actes hi ha (per calcular el % de la barra)
-  const {count: total} = await sb.from("actes_publicada")
-    .select("id",{count:"exact",head:true})
-    .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
-  const totalActes = total || 0;
+  function mostraPct(v){
+    v = Math.min(100, Math.round(v));
+    omple.style.width = v + "%";
+    pct.textContent = v + "%";
+  }
 
   let totes = [];
   let desdeFila = 0;
   const MIDA = 1000;
-  // llindar del "truc": en arribar al 80% real, mostrem 100%
-  const LLINDAR = 0.80;
-
-  function mostraPct(p){
-    const v = Math.min(100, Math.round(p*100));
-    omple.style.width = v + "%";
-    pct.textContent = v + "%";
-  }
+  let pintatPrimer = false;
+  // barra ESTIMADA: no sabem el total exacte (el recompte seria lent),
+  // així que avancem la barra de manera estimada a cada lot que arriba.
+  // Suposem ~6 lots típics; cada lot suma, i mai passa de 92% fins al final.
+  let estim = 0;
 
   while(true){
     const {data, error} = await sb.from("actes_publicada")
@@ -569,11 +566,18 @@ async function carregaTotsElsActes(){
     if(!data || data.length===0) break;
     totes = totes.concat(data);
 
-    // actualitza la barra (amb el truc del 80% -> 100%)
-    if(totalActes>0){
-      const frac = totes.length/totalActes;
-      mostraPct(frac>=LLINDAR ? 1 : (frac/LLINDAR));
+    // pinta el PRIMER lot de seguida (perquè l'usuari vegi actes ràpid).
+    // OJO: això NO activa els filtres (segueixen bloquejats fins al final).
+    if(!pintatPrimer){
+      pintaLlista(data, false);
+      pintatPrimer = true;
+      $("#compte").textContent = totes.length;
+      $("#et-res").textContent = "actes…";
     }
+
+    // barra estimada: cada lot apropa cap al 92%, sense arribar-hi del tot
+    estim = estim + (92 - estim) * 0.45;
+    mostraPct(estim);
 
     if(data.length < MIDA) break;
     desdeFila += MIDA;
@@ -581,12 +585,12 @@ async function carregaTotsElsActes(){
   }
 
   window._totsActes = totes;
-  mostraPct(1);
-  // amaga la barra i DESBLOQUEJA els filtres
+  mostraPct(100);
+  // ara sí: amaga la barra i DESBLOQUEJA els filtres
   setTimeout(()=>{
     barra.classList.add("amagat");
     document.body.classList.remove("carregant");
-  }, 350);
+  }, 300);
   return totes;
 }
 
@@ -946,6 +950,7 @@ document.addEventListener("click",e=>{
 
 // ---- arrencada ----
 (async()=>{
+  document.body.classList.add("carregant");   // filtres bloquejats des del primer instant
   pintaCategories();
   await carregaFiltres();        // municipis, comarques, subcategories (per al mapa i imatges)
   await carregaTotsElsActes();   // baixa TOTS els actes un cop (amb barra de progrés)
