@@ -523,11 +523,13 @@ function detallActe(a){
   return {txt: null, extra: preu};
 }
 // imatge de RESERVA (sempre al nostre servidor, carrega ràpid):
-// subcategoria (carpeta imatges/) -> altres
+// subcategoria MUSICAL (carpeta imatges/) -> altres
 function imatgeReserva(a){
   const subImg = window._subImg || {};
+  // busca NOMÉS la subcategoria de la categoria "Arts musicals"
+  // (un acte pot tenir subcategories d'altres categories que aquí no toquen)
   for(const p of (a.categories||[])){
-    if(p && p.subcategoria && subImg[p.subcategoria]){
+    if(p && p.categoria==="Arts musicals" && p.subcategoria && subImg[p.subcategoria]){
       return "imatges/" + subImg[p.subcategoria];
     }
   }

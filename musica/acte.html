@@ -83,8 +83,15 @@ function categoriesActe(a){
   return [...c];
 }
 let SUB_IMG = {};
-// imatge de reserva (sempre al nostre servidor): subcategoria -> categoria -> altres
+// imatge de reserva (sempre al nostre servidor): subcategoria musical -> categoria -> altres
 function imatgeReserva(a){
+  // prioritza la subcategoria de la categoria "Arts musicals"
+  for(const p of (a.categories||[])){
+    if(p && p.categoria==="Arts musicals" && p.subcategoria && SUB_IMG[p.subcategoria]){
+      return "imatges/" + SUB_IMG[p.subcategoria];
+    }
+  }
+  // si no, qualsevol subcategoria amb imatge
   for(const p of (a.categories||[])){
     if(p && p.subcategoria && SUB_IMG[p.subcategoria]){
       return "imatges/" + SUB_IMG[p.subcategoria];
