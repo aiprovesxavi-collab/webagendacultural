@@ -557,7 +557,7 @@ let mapa, capaMarcadors;
 // Tots els actes futurs es baixen UN COP a window._totsActes.
 // Després, filtrar és instantani (en local), i només es repinta la visualització.
 
-const CAMPS_LLISTA = "id,nom,data_inici,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
+const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
 
 // baixa tots els actes futurs per lots, omplint la barra de progrés
 async function carregaTotsElsActes(){
@@ -663,11 +663,23 @@ function aplicaFiltres(){
     res = res.filter(a=>idsMun.has(a.municipi_id));
   }
 
-  // --- dates (des de / fins, també s'afegeix) ---
+  // --- dates (des de / fins) — INCLOU actes EN CURS ---
+  // Un acte surt si està actiu en algun moment del període demanat:
+  //   comença abans (o el dia) que acaba el filtre   -> inici <= fins
+  //   i acaba després (o el dia) que comença el filtre -> fi   >= desde
+  // Si l'acte no té data_fi, es considera puntual (fi = inici).
   const desde = $("#f-desde").value;
   const fins = $("#f-fins").value;
-  if(desde){ res = res.filter(a=>(a.data_inici||"") >= desde || (a.data_inici||"")===""); }
-  if(fins){ res = res.filter(a=>(a.data_inici||"") <= fins); }
+  if(desde || fins){
+    res = res.filter(a=>{
+      const ini = (a.data_inici||"").slice(0,10);
+      if(!ini) return false;
+      const fi = (a.data_fi||"").slice(0,10) || ini;   // si no té fi, és puntual
+      if(fins && ini > fins) return false;   // comença després del període
+      if(desde && fi < desde) return false;  // ja s'havia acabat abans del període
+      return true;
+    });
+  }
 
   // pinta el resultat
   window._filtrats = res;
