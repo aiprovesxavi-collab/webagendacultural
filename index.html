@@ -126,7 +126,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
   border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
 .lloc-controls select:focus{outline:none;border-color:var(--c-plastiques)}
-.cerca-municipi{width:100%;display:flex;justify-content:center;margin-top:.8rem}
+.cerca-municipi{width:100%;display:flex;justify-content:center;margin-top:.8rem;margin-bottom:1.8rem}
 .cerca-municipi input{width:100%;max-width:420px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1px solid var(--vora);border-radius:10px;background:#fff}
 .cerca-municipi input:focus{outline:none;border-color:var(--c-plastiques)}
 .cerca-municipi input.no-valid{border-color:#d4264e;background:#fff6f7}
@@ -742,13 +742,25 @@ function aplicaFiltres(){
   function ordreIntern(a,b){
     const pa = a.tipus_temporal==="permanent", pb = b.tipus_temporal==="permanent";
     if(pa && pb){
+      // 1r: els que tenen imatge propia
       const ia=a.imatge?0:1, ib=b.imatge?0:1;
       if(ia!==ib) return ia-ib;
+      // 2n: els que tenen el nom en format titol (proxy de "registrat/curat"),
+      //     davant dels que el tenen tot en MAJUSCULES (original de Socrata).
+      //     Si algun es cola, no passa res: nomes afecta l'ordre.
+      const ta = esFormatTitol(a.nom)?0:1, tb = esFormatTitol(b.nom)?0:1;
+      if(ta!==tb) return ta-tb;
+      // desempat: per nom
       return (a.nom||"").localeCompare(b.nom||"","ca");
     }
     const da=(a.data_inici||"").slice(0,10), db=(b.data_inici||"").slice(0,10);
     if(da!==db) return da<db?-1:1;
     return minutsHora(a.horari_text)-minutsHora(b.horari_text);
+  }
+  // "format titol" = el nom TE minuscules (no esta tot en majuscules com l'original de Socrata)
+  function esFormatTitol(nom){
+    if(!nom) return false;
+    return nom !== nom.toUpperCase();
   }
 
   // categoria "principal" d'un acte = la primera de les seves que surt a ORDRE_CATS
