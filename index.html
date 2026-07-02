@@ -126,6 +126,10 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
 .lloc-controls select{flex:1;min-width:200px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;
   border:1.5px solid var(--vora);border-radius:11px;background:var(--paper);color:var(--tinta);cursor:pointer}
 .lloc-controls select:focus{outline:none;border-color:var(--c-plastiques)}
+.cerca-municipi{width:100%;display:flex;justify-content:center;margin-top:.8rem}
+.cerca-municipi input{width:100%;max-width:420px;font-family:'Outfit',sans-serif;font-size:1rem;padding:.7rem .9rem;border:1px solid var(--vora);border-radius:10px;background:#fff}
+.cerca-municipi input:focus{outline:none;border-color:var(--c-plastiques)}
+.cerca-municipi input.no-valid{border-color:#d4264e;background:#fff6f7}
 .toggle-mapa{display:flex;gap:.3rem;background:var(--fons);border-radius:11px;padding:.3rem}
 .toggle-mapa button{border:none;background:none;padding:.5rem .95rem;border-radius:8px;cursor:pointer;
   font-family:'Outfit',sans-serif;font-weight:600;font-size:.9rem;color:var(--gris);transition:all .2s}
@@ -363,6 +367,10 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 </svg>
       <div id="cm-tip" class="cm-tip"></div>
     </div>
+    <div class="cerca-municipi">
+      <input id="f-municipi" type="text" list="llista-municipis" placeholder="O escriu un municipi…" autocomplete="off">
+      <datalist id="llista-municipis"></datalist>
+    </div>
     <div class="toggle-mapa">
       <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
       <button id="t-mapa" data-vista="mapa">Mapa</button>
@@ -448,6 +456,8 @@ async function carregaFiltres(){
   ]);
   window._municipis = rMuns.data || [];
   window._comarques = rComs.data || [];
+  // omplir el datalist de la casella de municipi (per l'autocompletat validat)
+  omplaDatalistMunicipis();
   // Mapa indexat per "categoria|subcategoria" perquè els "Altres" no es trepitgin.
   // Creuem subcategories amb categories per id (sense dependre de joins).
   const catPerId = {};
@@ -896,7 +906,13 @@ let temp;
   });
 });
 
-// ---- botons de temps (Avui / Demà / Fins diumenge), acumulables ----
+// casella de municipi: filtra en triar/escriure un municipi valid
+(function(){
+  const inp = document.getElementById("f-municipi");
+  if(!inp) return;
+  inp.addEventListener("change", aplicaCasellaMunicipi);   // triar del datalist o sortir del camp
+  inp.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); aplicaCasellaMunicipi(); }});
+})();
 function isoLocal(d){
   // data local en format YYYY-MM-DD (sense desfasament de fus)
   return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10);
@@ -1018,6 +1034,39 @@ function filtraPerMunicipi(munId, munNom){
   esborraComarques();
   carregaActes();
 }
+// omple el <datalist> amb tots els municipis (per l'autocompletat de la casella)
+function omplaDatalistMunicipis(){
+  const dl = document.getElementById("llista-municipis");
+  if(!dl) return;
+  dl.innerHTML = (window._municipis||[])
+    .map(m=>`<option value="${(m.nom||"").replace(/"/g,"&quot;")}"></option>`)
+    .join("");
+}
+// quan l'usuari escriu/tria a la casella: nomes filtra si es un municipi REAL
+function aplicaCasellaMunicipi(){
+  const inp = document.getElementById("f-municipi");
+  if(!inp) return;
+  const text = (inp.value||"").trim();
+  if(!text){ // buit: treure el filtre de municipi si n'hi havia
+    if(window._geoMunId){ window._geoMunId=null; carregaActes(); }
+    inp.classList.remove("no-valid");
+    return;
+  }
+  // buscar un municipi que casi EXACTAMENT (normalitzant accents/majuscules)
+  const norm = s => (s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+  const objectiu = norm(text);
+  const trobat = (window._municipis||[]).find(m=>norm(m.nom)===objectiu);
+  if(trobat){
+    inp.classList.remove("no-valid");
+    inp.value = trobat.nom;          // deixar el nom oficial ben escrit
+    document.getElementById("geo-resultat").innerHTML = ""; // treure xip de geo si n'hi havia
+    esborraComarques();
+    filtraPerMunicipi(trobat.id, trobat.nom);
+  } else {
+    // el que ha escrit no es cap municipi -> marcar-ho i no filtrar per un invent
+    inp.classList.add("no-valid");
+  }
+}
 async function activaGeo(){
   const boto = document.getElementById("geo-boto");
   const res = document.getElementById("geo-resultat");
@@ -1044,7 +1093,8 @@ async function activaGeo(){
         .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
 
       // botó del meu municipi: estil gran, NOMÉS el nom (sense número)
-      let html = `<button type="button" class="geo-chip" data-mun="${meu.id}"><span class="nom">${meu.nom}</span></button>`;
+      // surt ja MARCAT (actiu), perquè qui clica "a prop meu" ja vol el seu poble filtrat
+      let html = `<button type="button" class="geo-chip actiu" data-mun="${meu.id}"><span class="nom">${meu.nom}</span></button>`;
 
       // si el meu municipi té 0 actes, oferim el més proper AMB actes
       if(!count){
@@ -1055,6 +1105,8 @@ async function activaGeo(){
       }
       res.innerHTML = html;
       boto.disabled=false; boto.textContent="📍 A prop meu";
+      // aplicar directament el filtre del meu municipi (sense esperar que el cliquin)
+      filtraPerMunicipi(meu.id, meu.nom);
     },
     (err)=>{
       res.innerHTML = '<div class="geo-info">No has donat permís d\'ubicació.</div>';
