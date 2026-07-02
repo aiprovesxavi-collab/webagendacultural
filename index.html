@@ -22,6 +22,7 @@
   --c-dansa:#c0379b;
   --c-conferencies:#0d8a8a;
   --c-altres:#5a6472;
+  --c-museus:#a8742e;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -406,6 +407,7 @@ const CATS = [
   {catBD:"Conferències",    etiqueta:"Conferències",  sub:"conferències · taules rodones · xerrades · simposis", color:"var(--c-conferencies)", img:"imatges/conferencies.jpg"},
   {catBD:"Cinema",          etiqueta:"Cinema",          sub:"pel·lícules a la fresca · cicles temàtics", color:"var(--c-cinema)", img:"imatges/cinema.jpg"},
   {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
+  {catBD:"Museus",          etiqueta:"Museus",          sub:"museus · col·leccions · centres d'interpretació", color:"var(--c-museus)", img:"imatges/museus.jpg"},
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
 ];
 const colorCat = {};
@@ -460,6 +462,11 @@ async function carregaFiltres(){
   initMapaComarques();
 }
 // ---- utilitats ----
+// text de data d'un acte: si és permanent, missatge fix; si no, la data normal
+function textDataActe(a){
+  if(a.tipus_temporal === "permanent") return "Permanent · consulteu horari al web";
+  return a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+}
 function fmtData(d){
   if(!d) return "Data per confirmar";
   const x=new Date(d);
@@ -557,7 +564,7 @@ let mapa, capaMarcadors;
 // Tots els actes futurs es baixen UN COP a window._totsActes.
 // Després, filtrar és instantani (en local), i només es repinta la visualització.
 
-const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
+const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud,tipus_temporal";
 
 // baixa tots els actes futurs per lots, omplint la barra de progrés
 async function carregaTotsElsActes(){
@@ -776,7 +783,7 @@ function pintaLlista(actes, afegir=false){
     t.innerHTML=`
       <div class="foto" style="background-image:url('${imatgeActe(a)}')"></div>
       <div class="cos">
-        <div class="data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
+        <div class="data">${textDataActe(a)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
         ${detallHtml}
         ${descHtml}
@@ -820,7 +827,7 @@ function pintaMapa(actes){
     const c=coordsActe(a);
     if(c){
       L.marker(c).addTo(capaMarcadors)
-        .bindPopup(`<b>${a.nom||""}</b><br>${fmtData(a.data_inici)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`);
+        .bindPopup(`<b>${a.nom||""}</b><br>${textDataActe(a)}<br>${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")}`);
       punts.push(c);
     }
   });
