@@ -721,14 +721,55 @@ function aplicaFiltres(){
     });
   }
 
-  // --- ORDENACIÓ: per data i, dins del mateix dia, per hora (sense hora al final) ---
-  res = res.slice().sort((a,b)=>{
-    const da = (a.data_inici||"").slice(0,10);
-    const db = (b.data_inici||"").slice(0,10);
-    if(da !== db) return da < db ? -1 : 1;       // primer per data
-    // mateixa data: ordena per hora; els sense hora (9999) van al final
-    return minutsHora(a.horari_text) - minutsHora(b.horari_text);
+  // --- ORDENACIÓ ---
+  // Cada categoria manté el seu ordre intern:
+  //   · actes normals -> per data i hora
+  //   · permanents (museus) -> primer els que tenen imatge
+  // Despres s'INTERCALEN per rondes (round-robin): 1r de cada categoria,
+  // 2n de cada categoria... seguint l'ordre dels botons (ORDRE_CATS).
+  const ORDRE_CATS = CATS.map(c=>c.catBD);
+
+  function ordreIntern(a,b){
+    const pa = a.tipus_temporal==="permanent", pb = b.tipus_temporal==="permanent";
+    if(pa && pb){
+      const ia=a.imatge?0:1, ib=b.imatge?0:1;
+      if(ia!==ib) return ia-ib;
+      return (a.nom||"").localeCompare(b.nom||"","ca");
+    }
+    const da=(a.data_inici||"").slice(0,10), db=(b.data_inici||"").slice(0,10);
+    if(da!==db) return da<db?-1:1;
+    return minutsHora(a.horari_text)-minutsHora(b.horari_text);
+  }
+
+  // categoria "principal" d'un acte = la primera de les seves que surt a ORDRE_CATS
+  function catPrincipal(a){
+    const seves = (a.categories||[]).map(x=>x&&x.categoria).filter(Boolean);
+    for(const c of ORDRE_CATS){ if(seves.includes(c)) return c; }
+    return seves[0] || "Altres";
+  }
+
+  // 1) agrupar per categoria principal
+  const grups = new Map();
+  ORDRE_CATS.forEach(c=>grups.set(c,[]));
+  res.forEach(a=>{
+    const c = catPrincipal(a);
+    if(!grups.has(c)) grups.set(c,[]);
+    grups.get(c).push(a);
   });
+  // 2) ordenar cada grup pel seu criteri intern
+  for(const g of grups.values()) g.sort(ordreIntern);
+  // 3) round-robin: una passada agafant l'i-èssim de cada grup
+  const ordenats = [];
+  let queden = true, i = 0;
+  while(queden){
+    queden = false;
+    for(const c of grups.keys()){
+      const g = grups.get(c);
+      if(i < g.length){ ordenats.push(g[i]); queden = true; }
+    }
+    i++;
+  }
+  res = ordenats;
 
   // pinta el resultat
   window._filtrats = res;
