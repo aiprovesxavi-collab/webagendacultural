@@ -279,6 +279,10 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
     <button type="button" id="geo-boto">📍 A prop meu</button>
     <div id="geo-resultat"></div>
   </div>
+  <div class="cerca-municipi">
+    <input id="f-municipi" type="text" list="llista-municipis" placeholder="O escriu un municipi…" autocomplete="off">
+    <datalist id="llista-municipis"></datalist>
+  </div>
   <div class="lloc-controls">
     <div id="mapa-comarques">
       <div class="mapa-ajuda">O toca una o més comarques per filtrar
@@ -366,10 +370,6 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 <text class="cm-lbl" data-nom="Moianès" x="617.0" y="446.1" text-anchor="middle"><tspan x="617.0" dy="0">Moianès</tspan></text>
 </svg>
       <div id="cm-tip" class="cm-tip"></div>
-    </div>
-    <div class="cerca-municipi">
-      <input id="f-municipi" type="text" list="llista-municipis" placeholder="O escriu un municipi…" autocomplete="off">
-      <datalist id="llista-municipis"></datalist>
     </div>
     <div class="toggle-mapa">
       <button id="t-llista" class="actiu" data-vista="llista">Llista</button>
@@ -1074,6 +1074,21 @@ async function activaGeo(){
     res.innerHTML = '<div class="geo-info">El teu navegador no permet geolocalització.</div>';
     return;
   }
+  // missatge quan la ubicació està bloquejada per a aquest lloc
+  const MSG_BLOQUEJAT = 'Tens la ubicació <b>bloquejada</b> per a aquest lloc. '
+      + 'Per activar-la, toca la icona 🔒 (o ⓘ) al costat de l\'adreça del navegador, obre els permisos i permet la <b>Ubicació</b>. '
+      + 'O, més senzill, escriu el teu municipi a la casella de sota. 👇';
+  // si el navegador ho permet, mirem l'estat del permís ABANS de demanar-lo
+  if(navigator.permissions && navigator.permissions.query){
+    try{
+      const st = await navigator.permissions.query({name:"geolocation"});
+      if(st.state === "denied"){
+        // ja sabem que fallarà: mostrem directament com desbloquejar-lo
+        res.innerHTML = '<div class="geo-info">'+MSG_BLOQUEJAT+'</div>';
+        return;
+      }
+    }catch(e){ /* si no es pot consultar, seguim i ho intentem igualment */ }
+  }
   boto.disabled = true;
   boto.textContent = "📍 Cercant…";
   navigator.geolocation.getCurrentPosition(
@@ -1109,7 +1124,15 @@ async function activaGeo(){
       filtraPerMunicipi(meu.id, meu.nom);
     },
     (err)=>{
-      res.innerHTML = '<div class="geo-info">No has donat permís d\'ubicació.</div>';
+      let msg;
+      if(err.code === 1){         // PERMISSION_DENIED
+        msg = MSG_BLOQUEJAT;
+      } else if(err.code === 2){  // POSITION_UNAVAILABLE
+        msg = 'No s\'ha pogut obtenir la ubicació ara mateix. Comprova que el GPS o la ubicació del dispositiu estigui activat i torna-ho a provar.';
+      } else {                    // TIMEOUT o altres
+        msg = 'S\'ha trigat massa a obtenir la ubicació. Torna-ho a provar, o escriu el teu municipi a la casella de sota.';
+      }
+      res.innerHTML = '<div class="geo-info">'+msg+'</div>';
       boto.disabled=false; boto.textContent="📍 A prop meu";
     },
     {enableHighAccuracy:false, timeout:8000, maximumAge:300000}
