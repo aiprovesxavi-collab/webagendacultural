@@ -852,7 +852,7 @@ function pintaLlista(actes, afegir=false){
         ${descHtml}
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
       </div>`;
-    t.onclick=()=>{ desaFiltres(); location.href = "acte.html?id=" + a.id; };
+    t.onclick=()=>{ desaFiltres(); try{sessionStorage.setItem("qfem_ve_acte","1");}catch(e){} location.href = "acte.html?id=" + a.id; };
     g.appendChild(t);
     // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
     const elFoto = t.querySelector(".foto");
@@ -1210,6 +1210,20 @@ function desaFiltres(){
   }catch(e){ /* si sessionStorage no va, no passa res */ }
 }
 function restauraFiltres(){
+  // Nomes restaurem si l'usuari TORNA d'un acte. Ho sabem per dos senyals:
+  //  - una bandera que vam posar en clicar l'acte, i/o
+  //  - el referrer (venim d'acte.html).
+  // Si recarrega (F5) o entra de nou, comencem net i esborrem el desat.
+  let bandera=false;
+  try{ bandera = sessionStorage.getItem("qfem_ve_acte")==="1"; }catch(e){}
+  const veDelReferrer = document.referrer && document.referrer.indexOf("acte.html") !== -1;
+  const veDunActe = bandera || veDelReferrer;
+  // consumim la bandera (un sol us): aixi una recarrega posterior ja no restaura
+  try{ sessionStorage.removeItem("qfem_ve_acte"); }catch(e){}
+  if(!veDunActe){
+    try{ sessionStorage.removeItem(CLAU_FILTRES); }catch(e){}
+    return false;
+  }
   let estat;
   try{ estat = JSON.parse(sessionStorage.getItem(CLAU_FILTRES)||"null"); }catch(e){ estat=null; }
   if(!estat) return false;
@@ -1259,6 +1273,18 @@ function restauraFiltres(){
   restauraFiltres();             // recupera els filtres si tornem d'un acte
   aplicaFiltres();               // primer pintat (amb els filtres restaurats, si n'hi ha)
 })();
+
+// Si tornem d'un acte i el navegador restaura la pàgina de la memòria cau
+// (bfcache), tot ja hi és intacte (filtres, scroll) i no cal fer res més.
+// Aquest gestor només evita comportaments estranys en aquests casos.
+window.addEventListener("pageshow", (e)=>{
+  if(e.persisted){
+    // pàgina restaurada de la cau: els filtres i el pintat ja hi són.
+    document.body.classList.remove("carregant");
+    // consumim la bandera perquè una recàrrega posterior (F5) no restauri filtres
+    try{ sessionStorage.removeItem("qfem_ve_acte"); }catch(e){}
+  }
+});
 
 // ---- menú hamburguesa ----
 (function(){
