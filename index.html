@@ -852,7 +852,7 @@ function pintaLlista(actes, afegir=false){
         ${descHtml}
         <div class="lloc">📍 ${[a.lloc_nom,nomMunicipi(a)].filter(Boolean).join(", ")||"Lloc per confirmar"}</div>
       </div>`;
-    t.onclick=()=>{ location.href = "acte.html?id=" + a.id; };
+    t.onclick=()=>{ desaFiltres(); location.href = "acte.html?id=" + a.id; };
     g.appendChild(t);
     // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
     const elFoto = t.querySelector(".foto");
@@ -1191,13 +1191,73 @@ document.addEventListener("click",e=>{
   }
 });
 
+// ---- persistència de filtres (per tornar d'un acte amb els filtres posats) ----
+// Es guarda a sessionStorage: dura la sessió del navegador (no per sempre).
+const CLAU_FILTRES = "qfem_filtres";
+function desaFiltres(){
+  try{
+    const estat = {
+      cats: [...seleccionades],
+      comarques: [...comarquesSel],
+      geoMun: window._geoMunId || null,
+      geoMunNom: (document.getElementById("f-municipi")||{}).value || "",
+      text: ($("#f-text")||{}).value || "",
+      desde: ($("#f-desde")||{}).value || "",
+      fins: ($("#f-fins")||{}).value || "",
+      tempsActius: [...document.querySelectorAll(".temps.actiu")].map(b=>b.dataset.temps||b.textContent.trim())
+    };
+    sessionStorage.setItem(CLAU_FILTRES, JSON.stringify(estat));
+  }catch(e){ /* si sessionStorage no va, no passa res */ }
+}
+function restauraFiltres(){
+  let estat;
+  try{ estat = JSON.parse(sessionStorage.getItem(CLAU_FILTRES)||"null"); }catch(e){ estat=null; }
+  if(!estat) return false;
+  // categories: re-marcar botons (.cat, en el mateix ordre que CATS) + omplir el Set
+  if(Array.isArray(estat.cats)){
+    estat.cats.forEach(c=>seleccionades.add(c));
+    const botons = document.querySelectorAll("#categories .cat");
+    botons.forEach((b,i)=>{
+      const catBD = (CATS[i]||{}).catBD;
+      if(catBD && seleccionades.has(catBD)) b.classList.add("actiu");
+    });
+  }
+  // comarques: re-marcar al mapa (data-comid + classe "sel") + omplir el Set
+  if(Array.isArray(estat.comarques)){
+    estat.comarques.forEach(id=>comarquesSel.add(id));
+    document.querySelectorAll("#mapacat .cm").forEach(p=>{
+      if(p.dataset.comid && comarquesSel.has(p.dataset.comid)) p.classList.add("sel");
+    });
+    if(typeof actualitzaDimMapa==="function") actualitzaDimMapa();
+  }
+  // municipi (geo o casella)
+  if(estat.geoMun){
+    window._geoMunId = estat.geoMun;
+    const inp=document.getElementById("f-municipi");
+    if(inp && estat.geoMunNom) inp.value = estat.geoMunNom;
+  }
+  // text i dates
+  if(estat.text && $("#f-text")) $("#f-text").value = estat.text;
+  if(estat.desde && $("#f-desde")) $("#f-desde").value = estat.desde;
+  if(estat.fins && $("#f-fins")) $("#f-fins").value = estat.fins;
+  // botons de temps actius
+  if(Array.isArray(estat.tempsActius) && estat.tempsActius.length){
+    document.querySelectorAll(".temps").forEach(b=>{
+      const clau = b.dataset.temps || b.textContent.trim();
+      if(estat.tempsActius.includes(clau)) b.classList.add("actiu");
+    });
+  }
+  return true;
+}
+
 // ---- arrencada ----
 (async()=>{
   document.body.classList.add("carregant");   // filtres bloquejats des del primer instant
   pintaCategories();
   await carregaFiltres();        // municipis, comarques, subcategories (per al mapa i imatges)
   await carregaTotsElsActes();   // baixa TOTS els actes un cop (amb barra de progrés)
-  aplicaFiltres();               // primer pintat (sense filtres = tots)
+  restauraFiltres();             // recupera els filtres si tornem d'un acte
+  aplicaFiltres();               // primer pintat (amb els filtres restaurats, si n'hi ha)
 })();
 
 // ---- menú hamburguesa ----
