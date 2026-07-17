@@ -574,7 +574,7 @@ let mapa, capaMarcadors;
 // Tots els actes futurs es baixen UN COP a window._totsActes.
 // Després, filtrar és instantani (en local), i només es repinta la visualització.
 
-const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud,tipus_temporal";
+const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud,tipus_temporal,es_contenidor";
 
 // baixa tots els actes futurs per lots, omplint la barra de progrés
 async function carregaTotsElsActes(){
@@ -731,67 +731,102 @@ function aplicaFiltres(){
     });
   }
 
-  // --- ORDENACIÓ ---
-  // Cada categoria manté el seu ordre intern:
-  //   · actes normals -> per data i hora
-  //   · permanents (museus) -> primer els que tenen imatge
-  // Despres s'INTERCALEN per rondes (round-robin): 1r de cada categoria,
-  // 2n de cada categoria... seguint l'ordre dels botons (ORDRE_CATS).
-  const ORDRE_CATS = CATS.map(c=>c.catBD);
+  // --- ORDENACIÓ GLOBAL (adaptativa segons la categoria filtrada) ---
+  // Cada categoria té un tipus "característic" que va PRIMER quan es filtra només
+  // per ella:
+  //   · espectacles (musicals, escèniques, dansa, cinema, conferències, literatura,
+  //     cultura popular) -> PUNTUAL primer.
+  //   · rang (arts plàstiques, formació) -> RANG primer.
+  //   · museus -> PERMANENT primer (el museu abans que exposicions/actes dins seu).
+  // Si NO hi ha filtre de categoria, o n'hi ha MÉS D'UNA -> ordre general:
+  //   puntual -> rang curt -> contenidor -> permanent.
 
-  function ordreIntern(a,b){
-    const pa = a.tipus_temporal==="permanent", pb = b.tipus_temporal==="permanent";
-    if(pa && pb){
-      // 1r: els que tenen imatge propia
-      const ia=a.imatge?0:1, ib=b.imatge?0:1;
-      if(ia!==ib) return ia-ib;
-      // 2n: els que tenen el nom en format titol (proxy de "registrat/curat"),
-      //     davant dels que el tenen tot en MAJUSCULES (original de Socrata).
-      //     Si algun es cola, no passa res: nomes afecta l'ordre.
+  // subcategories que marquen un acte com a PERMANENT (durada llunyana)
+  const SUBCAT_PERMANENT = new Set(["Museus", "Rooftops", "Karaokes"]);
+  function esPermanent(a){
+    return (a.categories||[]).some(x => x && SUBCAT_PERMANENT.has(x.subcategoria));
+  }
+  function esContenidor(a){ return a.es_contenidor === true; }
+  function esRang(a){ return a.tipus_temporal === "rang"; }
+  function esPuntual(a){ return a.tipus_temporal === "puntual" || a.tipus_temporal === "multipuntual"; }
+
+  // ordre de prioritat dels 4 grups segons el "mode" (quin tipus és el característic)
+  // grups: P=puntual, R=rang curt, C=contenidor, M=permanent
+  // retorna un número de rang (com més baix, més amunt)
+  function fesRangTipus(mode){
+    // ordres per mode: llista dels grups de dalt a baix
+    const ordres = {
+      general:   ["P","R","C","M"],   // sense filtre o múltiples
+      espectacle:["P","R","C","M"],   // puntual primer
+      rang:      ["R","C","P","M"],   // rang primer (exposicions, formació)
+      museu:     ["M","C","R","P"],   // permanent (museu) primer
+    };
+    const ord = ordres[mode] || ordres.general;
+    return function(a){
+      let g;
+      if(esPermanent(a)) g = "M";
+      else if(esContenidor(a)) g = "C";
+      else if(esRang(a)) g = "R";
+      else g = "P";
+      const idx = ord.indexOf(g);
+      return idx < 0 ? 99 : idx;
+    };
+  }
+
+  // mode d'ordenació segons les categories seleccionades
+  const CATS_ESPECTACLE = new Set(["Arts musicals","Arts escèniques","Dansa","Cinema","Conferències","Literatura","Cultura popular"]);
+  const CATS_RANG = new Set(["Arts plàstiques","Formació"]);
+  const CATS_MUSEU = new Set(["Museus"]);
+  let mode = "general";
+  if(seleccionades && seleccionades.size === 1){
+    const cat = [...seleccionades][0];
+    if(CATS_MUSEU.has(cat)) mode = "museu";
+    else if(CATS_RANG.has(cat)) mode = "rang";
+    else if(CATS_ESPECTACLE.has(cat)) mode = "espectacle";
+  }
+  const rangTipus = fesRangTipus(mode);
+
+  const soloData = s => (s||"").slice(0,10);
+
+  res.sort((a,b)=>{
+    const ra = rangTipus(a), rb = rangTipus(b);
+    if(ra !== rb) return ra - rb;                 // 1r: pel grup segons el mode
+
+    // dins del mateix grup, l'ordre intern depèn del tipus de l'acte
+    const permanent = esPermanent(a);
+    const contenidor = esContenidor(a) && !permanent;
+    const rang = esRang(a) && !permanent && !contenidor;
+
+    if(permanent){                                // PERMANENTS: imatge, format títol, nom
+      const ia = a.imatge?0:1, ib = b.imatge?0:1;
+      if(ia !== ib) return ia - ib;
       const ta = esFormatTitol(a.nom)?0:1, tb = esFormatTitol(b.nom)?0:1;
-      if(ta!==tb) return ta-tb;
-      // desempat: per nom
+      if(ta !== tb) return ta - tb;
       return (a.nom||"").localeCompare(b.nom||"","ca");
     }
-    const da=(a.data_inici||"").slice(0,10), db=(b.data_inici||"").slice(0,10);
-    if(da!==db) return da<db?-1:1;
-    return minutsHora(a.horari_text)-minutsHora(b.horari_text);
-  }
+    if(rang){                                     // RANG CURT: per data de FI (acaba abans primer)
+      const fa = soloData(a.data_fi) || soloData(a.data_inici);
+      const fb = soloData(b.data_fi) || soloData(b.data_inici);
+      if(fa !== fb) return fa < fb ? -1 : 1;
+      return (a.nom||"").localeCompare(b.nom||"","ca");
+    }
+    if(contenidor){                               // CONTENIDORS: per data d'inici
+      const da = soloData(a.data_inici), db = soloData(b.data_inici);
+      if(da !== db) return da < db ? -1 : 1;
+      return (a.nom||"").localeCompare(b.nom||"","ca");
+    }
+    // PUNTUALS/MULTIPUNTUALS: per data d'inici (avui primer), després hora
+    const da = soloData(a.data_inici), db = soloData(b.data_inici);
+    if(da !== db) return da < db ? -1 : 1;
+    return minutsHora(a.horari_text) - minutsHora(b.horari_text);
+  });
+
   // "format titol" = el nom TE minuscules (no esta tot en majuscules com l'original de Socrata)
   function esFormatTitol(nom){
     if(!nom) return false;
     return nom !== nom.toUpperCase();
   }
 
-  // categoria "principal" d'un acte = la primera de les seves que surt a ORDRE_CATS
-  function catPrincipal(a){
-    const seves = (a.categories||[]).map(x=>x&&x.categoria).filter(Boolean);
-    for(const c of ORDRE_CATS){ if(seves.includes(c)) return c; }
-    return seves[0] || "Altres";
-  }
-
-  // 1) agrupar per categoria principal
-  const grups = new Map();
-  ORDRE_CATS.forEach(c=>grups.set(c,[]));
-  res.forEach(a=>{
-    const c = catPrincipal(a);
-    if(!grups.has(c)) grups.set(c,[]);
-    grups.get(c).push(a);
-  });
-  // 2) ordenar cada grup pel seu criteri intern
-  for(const g of grups.values()) g.sort(ordreIntern);
-  // 3) round-robin: una passada agafant l'i-èssim de cada grup
-  const ordenats = [];
-  let queden = true, i = 0;
-  while(queden){
-    queden = false;
-    for(const c of grups.keys()){
-      const g = grups.get(c);
-      if(i < g.length){ ordenats.push(g[i]); queden = true; }
-    }
-    i++;
-  }
-  res = ordenats;
 
   // pinta el resultat
   window._filtrats = res;
