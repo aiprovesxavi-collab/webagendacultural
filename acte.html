@@ -39,6 +39,10 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
 .d-saber{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.6;color:var(--gris);
   border-left:3px solid var(--c-musicals);padding:.4rem 0 .4rem 1rem;margin:1.4rem 0;background:linear-gradient(90deg,rgba(240,130,10,.04),transparent)}
 .d-saber::before{content:"Sabies que… ";font-style:normal;font-weight:600;color:var(--c-musicals)}
+.d-horari{font-family:'Outfit',sans-serif;font-size:1rem;line-height:1.9;color:#2a2620;margin:1.4rem 0;
+  padding:1rem 1.2rem;background:var(--fons);border:1px solid var(--vora);border-radius:12px;white-space:normal}
+.d-horari-tit{display:block;font-weight:700;color:var(--c-musicals);text-transform:uppercase;
+  letter-spacing:.05em;font-size:.85rem;margin-bottom:.4rem}
 .d-enllac{display:inline-block;margin-top:1rem;background:var(--tinta);color:#fff;text-decoration:none;
   padding:.85rem 1.6rem;border-radius:12px;font-family:'Outfit',sans-serif;font-weight:600;transition:transform .2s}
 .d-enllac:hover{transform:translateY(-2px)}
@@ -174,13 +178,22 @@ function pinta(a){
   const fontHtml = fonts.length
     ? `<div class="d-font">Font: ${fonts.join(" · ")}</div>` : "";
 
+  // per als permanents (museus): "Permanent" a la línia de data, i l'horari
+  // complet en una secció pròpia (l'horari del museu és el que importa).
+  const esPerm = a.es_permanent === true;
+  const dataText = esPerm ? "Permanent" : (a.data_text || fmtDataHora(a.data_inici, a.horari_text));
+  const horariHtml = (esPerm && a.horari_text)
+    ? `<div class="d-horari"><span class="d-horari-tit">Horari</span>${a.horari_text.replace(/\n/g,"<br>")}</div>`
+    : "";
+
   document.getElementById("contingut").innerHTML = `
     <div class="foto-gran" style="background-image:url('${imatgeActe(a)}')"></div>
-    <div class="d-data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
+    <div class="d-data">${dataText}</div>
     <h1>${a.nom||"Acte sense títol"}</h1>
     <div class="d-meta">${meta}</div>
     ${a.artistes?`<div class="d-artistes">Amb: ${a.artistes}</div>`:""}
     <div class="d-descripcio">${a.descripcio_net || ""}</div>
+    ${horariHtml}
     ${a.a_saber?`<div class="d-saber">${a.a_saber}</div>`:""}
     ${enllacHtml}
     ${fontHtml}
