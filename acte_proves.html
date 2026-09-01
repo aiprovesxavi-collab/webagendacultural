@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Acte · Agenda Cultural de Catalunya</title>
+<title>Acte · PROVES · Agenda Cultural de Catalunya</title>
+<meta name="robots" content="noindex,nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -39,6 +40,10 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
 .d-saber{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;line-height:1.6;color:var(--gris);
   border-left:3px solid var(--c-musicals);padding:.4rem 0 .4rem 1rem;margin:1.4rem 0;background:linear-gradient(90deg,rgba(240,130,10,.04),transparent)}
 .d-saber::before{content:"Sabies que… ";font-style:normal;font-weight:600;color:var(--c-musicals)}
+.d-horari{font-family:'Outfit',sans-serif;font-size:1rem;line-height:1.9;color:#2a2620;margin:1.4rem 0;
+  padding:1rem 1.2rem;background:var(--fons);border:1px solid var(--vora);border-radius:12px;white-space:normal}
+.d-horari-tit{display:block;font-weight:700;color:var(--c-musicals);text-transform:uppercase;
+  letter-spacing:.05em;font-size:.85rem;margin-bottom:.4rem}
 .d-enllac{display:inline-block;margin-top:1rem;background:var(--tinta);color:#fff;text-decoration:none;
   padding:.85rem 1.6rem;border-radius:12px;font-family:'Outfit',sans-serif;font-weight:600;transition:transform .2s}
 .d-enllac:hover{transform:translateY(-2px)}
@@ -48,7 +53,7 @@ h1{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(1.6rem,4vw,2.6rem)
 <body>
 
 <div class="detall">
-  <a class="tornar" href="index.html">← Tornar als actes</a>
+  <a class="tornar" href="index_proves.html">← Tornar als actes (PROVES)</a>
   <div id="contingut"><div class="estat">Carregant l'acte…</div></div>
 </div>
 
@@ -65,11 +70,19 @@ const IMG_CAT = {
   "Arts musicals":"imatges/musicals.jpg","Arts plàstiques":"imatges/plastiques.jpg",
   "Cultura popular":"imatges/popular.jpg","Literatura":"imatges/literatura.jpg",
   "Conferències":"imatges/conferencies.jpg","Cinema":"imatges/cinema.jpg",
-  "Formació":"imatges/formacio.jpg","Altres":"imatges/altres.jpg"
+  "Formació":"imatges/formacio.jpg","Museus":"imatges/museus.jpg","Altres":"imatges/altres.jpg"
 };
 function fmtData(d){
   if(!d) return "Data per confirmar";
-  return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+  return new Date(d).toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Madrid'});
+}
+// hora d'un timestamp SEMPRE en hora de Catalunya ("" si es mitjanit = sense hora)
+function horaDeData(s){
+  if(!s) return "";
+  const x = new Date(s);
+  if(isNaN(x)) return "";
+  const h = new Intl.DateTimeFormat('ca-ES',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(x);
+  return (h === "00:00") ? "" : h;
 }
 function fmtHora(h){
   if(!h) return "";
@@ -78,16 +91,23 @@ function fmtHora(h){
   let hh=parseInt(m[1],10); if(hh<0||hh>23) return "";
   return String(hh).padStart(2,'0')+":"+(m[2]||"00");
 }
-function fmtDataHora(d,h){const data=fmtData(d);const hora=fmtHora(h);return hora?`${data} · ${hora}`:data;}
+function fmtDataHora(d,h){const data=fmtData(d);const hora=horaDeData(d)||fmtHora(h);return hora?`${data} · ${hora}`:data;}
+// MODEL DE BLOCS: categoria principal + secundaries (parelles {categoria, subcategoria})
+function parellesCat(a){
+  const p=[];
+  if(a.categoria_principal) p.push({categoria:a.categoria_principal, subcategoria:a.subcategoria_principal||null});
+  (a.categories_secundaries||[]).forEach(x=>{ if(x && x.categoria) p.push(x); });
+  return p;
+}
 function categoriesActe(a){
   const c=new Set();
-  (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
+  parellesCat(a).forEach(x=>c.add(x.categoria));
   return [...c];
 }
 let SUB_IMG = {};
 // imatge de reserva (sempre al nostre servidor): subcategoria -> categoria -> altres
 function imatgeReserva(a){
-  for(const p of (a.categories||[])){
+  for(const p of parellesCat(a)){
     if(p && p.categoria && p.subcategoria){
       const fitxer = SUB_IMG[p.categoria + "|" + p.subcategoria];
       if(fitxer) return "categoria/" + fitxer;
@@ -174,13 +194,34 @@ function pinta(a){
   const fontHtml = fonts.length
     ? `<div class="d-font">Font: ${fonts.join(" · ")}</div>` : "";
 
+  // MODEL DE BLOCS: permanents (museus) -> "Permanent" + horari en seccio propia;
+  // exposicions amb horari (propi o heretat del museu) -> tambe la seccio;
+  // pare funcio -> la propera funcio a la linia de data i la llista de funcions.
+  const esPerm = a.tipus_temporal === "permanent";
+  const esFuncio = a.es_bloc === "funcio" && Array.isArray(a.funcions) && a.funcions.length;
+  const avuiIso = new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const futures = esFuncio ? a.funcions.filter(f=>f && f.data && f.data >= avuiIso) : [];
+  const fmtFuncio = f => fmtData(f.data + "T12:00:00") + (f.hora ? ` · ${f.hora}` : "");
+  let dataText;
+  if(esPerm) dataText = "Permanent";
+  else if(esFuncio) dataText = futures.length ? ("Propera funció: " + fmtFuncio(futures[0])) : ("Del " + fmtData(a.data_inici) + " al " + fmtData(a.data_fi));
+  else dataText = a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+  const horariHtml = ((esPerm || a.es_bloc === "exposicio") && a.horari_text)
+    ? `<div class="d-horari"><span class="d-horari-tit">Horari</span>${a.horari_text.replace(/\n/g,"<br>")}</div>`
+    : "";
+  const funcionsHtml = (esFuncio && futures.length)
+    ? `<div class="d-horari"><span class="d-horari-tit">Funcions (${futures.length})</span>${futures.slice(0,40).map(fmtFuncio).join("<br>")}${futures.length>40?"<br>…":""}</div>`
+    : "";
+
   document.getElementById("contingut").innerHTML = `
     <div class="foto-gran" style="background-image:url('${imatgeActe(a)}')"></div>
-    <div class="d-data">${a.data_text || fmtDataHora(a.data_inici, a.horari_text)}</div>
+    <div class="d-data">${dataText}</div>
     <h1>${a.nom||"Acte sense títol"}</h1>
     <div class="d-meta">${meta}</div>
     ${a.artistes?`<div class="d-artistes">Amb: ${a.artistes}</div>`:""}
     <div class="d-descripcio">${a.descripcio_net || ""}</div>
+    ${horariHtml}
+    ${funcionsHtml}
     ${a.a_saber?`<div class="d-saber">${a.a_saber}</div>`:""}
     ${enllacHtml}
     ${fontHtml}
