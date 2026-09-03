@@ -476,6 +476,22 @@ async function carregaFiltres(){
 // ---- utilitats ----
 // text de data d'un acte: si és permanent (museu), indicació curta; si no, la data normal.
 // L'horari complet del museu es mostra a la fitxa de detall de l'acte.
+// data_text es per a TEXT HUMA ("Del 4 al 6 de setembre..."); si porta una
+// data de maquina (ISO), s'ignora i la formatem nosaltres.
+function dataTextHuma(t){
+  if(!t) return null;
+  const s = String(t).trim();
+  return /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/.test(s) ? null : t;
+}
+// artistes de vegades arriben amb disfressa de maquina: {"A","B"} -> A · B
+function netejaArtistes(t){
+  if(!t) return t;
+  const s = String(t).trim();
+  if(!s.startsWith("{") || !s.endsWith("}")) return t;
+  let parts = s.slice(1, -1).split('","');
+  if(parts.length === 1) parts = parts[0].split(",");
+  return parts.map(x=>x.replace(/^"+|"+$/g, "").trim()).filter(Boolean).join(" · ");
+}
 function textDataActe(a){
   if(a.tipus_temporal === "permanent") return "Permanent";
   // MODEL DE BLOCS: el pare funcio es data per la seva PROPERA funcio (calculada al filtrar)
@@ -483,7 +499,7 @@ function textDataActe(a){
     const n = (a._fills||[]).length;
     return fmtDataHora(a._propera.data_inici, null) + (n>1 ? ` · ${n} funcions` : "");
   }
-  return a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+  return dataTextHuma(a.data_text) || fmtDataHora(a.data_inici, a.horari_text);
 }
 // dia (YYYY-MM-DD) i hora (HH:MM) d'un timestamp, SEMPRE en hora de Catalunya
 function diaLocal(s){
@@ -544,7 +560,7 @@ function preuActe(a){
 // informació complementària per a la targeta, en cascada segons què hi hagi:
 // 1) artistes (+ preu)  2) categoria  3) públic destinatari  4) tros de descripció
 function detallActe(a){
-  const artistes=(a.artistes||"").toString().trim();
+  const artistes=netejaArtistes((a.artistes||"").toString().trim());
   const preu=preuActe(a);
   if(artistes){
     return {txt: artistes, extra: preu};

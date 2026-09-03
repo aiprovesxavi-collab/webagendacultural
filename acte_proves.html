@@ -99,6 +99,22 @@ function parellesCat(a){
   (a.categories_secundaries||[]).forEach(x=>{ if(x && x.categoria) p.push(x); });
   return p;
 }
+// data_text es per a TEXT HUMA ("Del 4 al 6 de setembre..."); si porta una
+// data de maquina (ISO), s'ignora i la formatem nosaltres.
+function dataTextHuma(t){
+  if(!t) return null;
+  const s = String(t).trim();
+  return /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/.test(s) ? null : t;
+}
+// artistes de vegades arriben amb disfressa de maquina: {"A","B"} -> A · B
+function netejaArtistes(t){
+  if(!t) return t;
+  const s = String(t).trim();
+  if(!s.startsWith("{") || !s.endsWith("}")) return t;
+  let parts = s.slice(1, -1).split('","');
+  if(parts.length === 1) parts = parts[0].split(",");
+  return parts.map(x=>x.replace(/^"+|"+$/g, "").trim()).filter(Boolean).join(" · ");
+}
 function categoriesActe(a){
   const c=new Set();
   parellesCat(a).forEach(x=>c.add(x.categoria));
@@ -205,7 +221,7 @@ function pinta(a){
   let dataText;
   if(esPerm) dataText = "Permanent";
   else if(esFuncio) dataText = futures.length ? fmtFuncio(futures[0]) : ("Del " + fmtData(a.data_inici) + " al " + fmtData(a.data_fi));
-  else dataText = a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+  else dataText = dataTextHuma(a.data_text) || fmtDataHora(a.data_inici, a.horari_text);
   const horariHtml = ((esPerm || a.es_bloc === "exposicio") && a.horari_text)
     ? `<div class="d-horari"><span class="d-horari-tit">Horari</span>${a.horari_text.replace(/\n/g,"<br>")}</div>`
     : "";
@@ -218,7 +234,7 @@ function pinta(a){
     <div class="d-data">${dataText}</div>
     <h1>${a.nom||"Acte sense títol"}</h1>
     <div class="d-meta">${meta}</div>
-    ${a.artistes?`<div class="d-artistes">Amb: ${a.artistes}</div>`:""}
+    ${a.artistes?`<div class="d-artistes">Amb: ${netejaArtistes(a.artistes)}</div>`:""}
     <div class="d-descripcio">${a.descripcio_net || ""}</div>
     ${horariHtml}
     ${funcionsHtml}
