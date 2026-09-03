@@ -406,6 +406,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
 
+// TEXT PUBLIC de les categories: la clau interna es sobirana a dades i filtres,
+// pero el que veu la gent es tradueix aqui (una linia per canviar-ho dema)
+const ETIQUETA_CAT = { "Formació": "Tallers i cursos" };
+function etiquetaCategoria(nom){ return ETIQUETA_CAT[nom] || nom; }
+
 // ---- definicio visual de les 10 categories ----
 const CATS = [
   {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · circ · màgia · titelles · monòlegs", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
@@ -416,7 +421,7 @@ const CATS = [
   {catBD:"Literatura",      etiqueta:"Literatura",    sub:"poesia · recitals · presentacions · contacontes", color:"var(--c-literatura)", img:"imatges/literatura.jpg"},
   {catBD:"Conferències",    etiqueta:"Conferències",  sub:"conferències · taules rodones · xerrades · simposis", color:"var(--c-conferencies)", img:"imatges/conferencies.jpg"},
   {catBD:"Cinema",          etiqueta:"Cinema",          sub:"pel·lícules a la fresca · cicles temàtics", color:"var(--c-cinema)", img:"imatges/cinema.jpg"},
-  {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
+  {catBD:"Formació",        etiqueta:"Tallers i cursos", sub:"tallers · cursos · seminaris", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
   {catBD:"Museus",          etiqueta:"Museus",          sub:"museus · col·leccions · centres d'interpretació", color:"var(--c-museus)", img:"imatges/museus.jpg"},
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
 ];
@@ -567,7 +572,7 @@ function detallActe(a){
   }
   const cats=categoriesActe(a);
   if(cats.length){
-    return {txt: cats.join(" · "), extra: preu};
+    return {txt: cats.map(etiquetaCategoria).join(" · "), extra: preu};
   }
   const pub=(a.public_desti||"").toString().trim();
   if(pub){

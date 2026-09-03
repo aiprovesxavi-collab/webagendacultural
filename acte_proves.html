@@ -106,6 +106,9 @@ function dataTextHuma(t){
   const s = String(t).trim();
   return /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/.test(s) ? null : t;
 }
+// TEXT PUBLIC de les categories (la clau interna es sobirana a dades i filtres)
+const ETIQUETA_CAT = { "Formació": "Tallers i cursos" };
+function etiquetaCategoria(nom){ return ETIQUETA_CAT[nom] || nom; }
 // artistes de vegades arriben amb disfressa de maquina: {"A","B"} -> A · B
 function netejaArtistes(t){
   if(!t) return t;
@@ -199,7 +202,7 @@ function pinta(a){
   else if(a.preu) meta+=`<span class="chip">${a.preu}</span>`;
   if(a.idioma) meta+=`<span class="chip">${a.idioma}</span>`;
   if(a.public_desti) meta+=`<span class="chip">${a.public_desti}</span>`;
-  if(cats.length) meta+=`<span class="chip">${cats.join(" · ")}</span>`;
+  if(cats.length) meta+=`<span class="chip">${cats.map(etiquetaCategoria).join(" · ")}</span>`;
 
   const url = a.enllac;
   const enllacHtml = (url && url.startsWith("http"))
