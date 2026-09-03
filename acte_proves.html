@@ -204,7 +204,7 @@ function pinta(a){
   const fmtFuncio = f => fmtData(f.data + "T12:00:00") + (f.hora ? ` · ${f.hora}` : "");
   let dataText;
   if(esPerm) dataText = "Permanent";
-  else if(esFuncio) dataText = futures.length ? ("Propera funció: " + fmtFuncio(futures[0])) : ("Del " + fmtData(a.data_inici) + " al " + fmtData(a.data_fi));
+  else if(esFuncio) dataText = futures.length ? fmtFuncio(futures[0]) : ("Del " + fmtData(a.data_inici) + " al " + fmtData(a.data_fi));
   else dataText = a.data_text || fmtDataHora(a.data_inici, a.horari_text);
   const horariHtml = ((esPerm || a.es_bloc === "exposicio") && a.horari_text)
     ? `<div class="d-horari"><span class="d-horari-tit">Horari</span>${a.horari_text.replace(/\n/g,"<br>")}</div>`
