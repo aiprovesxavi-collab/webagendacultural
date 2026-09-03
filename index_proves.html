@@ -580,8 +580,27 @@ function imatgeReserva(a){
 // imatge PRÒPIA de l'acte (pot ser externa i fallar), o null
 function imatgePropia(a){ return a.imatge || null; }
 
+// per a les TARGETES, la foto de Places es demana a mida de targeta:
+// molt mes rapida (i mes lleugera per a tothom) que la de 1200px,
+// que queda reservada per a la fitxa de l'acte.
+function imatgePropiaTargeta(a){
+  const u = imatgePropia(a);
+  return u ? u.replace(/maxWidthPx=\d+/, "maxWidthPx=400") : null;
+}
+
 // compatibilitat: imatge inicial a mostrar = sempre la de reserva
 function imatgeActe(a){ return imatgeReserva(a); }
+
+// fons EN CAPES per a la targeta: si la imatge de subcategoria no existeix
+// (404), la capa de categoria es veu sola; i si tampoc, la d'"altres".
+function fonsReserva(a){
+  const capes = [imatgeReserva(a)];
+  const cats = categoriesActe(a);
+  const catImg = (cats.length && imgCat[cats[0]]) || "imatges/altres.jpg";
+  if(catImg && capes[0] !== catImg) capes.push(catImg);
+  if(capes[capes.length-1] !== "imatges/altres.jpg") capes.push("imatges/altres.jpg");
+  return capes.map(u=>`url('${u}')`).join(",");
+}
 
 // intenta carregar la imatge pròpia (externa) amb límit de temps;
 // si carrega bé dins el termini, posa-la com a fons de l'element;
@@ -736,7 +755,9 @@ function aplicaFiltres(){
   const cats = [...seleccionades];
   if(cats.length){
     res = res.filter(a=>{
-      const seves = categoriesActe(a);
+      // DOCTRINA DEL MODEL: el filtre nomes mira la categoria PRINCIPAL;
+      // les secundaries son "nomes mostrar" (vesteixen la targeta, no filtren)
+      const seves = a.categoria_principal ? [a.categoria_principal] : [];
       return cats.some(c=>seves.includes(c));
     });
   }
@@ -959,7 +980,7 @@ function pintaLlista(actes, afegir=false){
     const desc=(a.descripcio_net||"").toString().trim();
     const descHtml = (desc && desc!==d.txt) ? `<div class="desc">${desc}</div>` : `<div class="desc-buit"></div>`;
     t.innerHTML=`
-      <div class="foto" style="background-image:url('${imatgeActe(a)}')"></div>
+      <div class="foto" style="background-image:${fonsReserva(a)}"></div>
       <div class="cos">
         <div class="data">${textDataActe(a)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
@@ -971,7 +992,7 @@ function pintaLlista(actes, afegir=false){
     g.appendChild(t);
     // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
     const elFoto = t.querySelector(".foto");
-    provaImatgePropia(elFoto, imatgePropia(a), 4000);
+    provaImatgePropia(elFoto, imatgePropiaTargeta(a), 10000);
   });
 }
 
