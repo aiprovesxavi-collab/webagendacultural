@@ -34,6 +34,7 @@ body{font-family:'Outfit',system-ui,sans-serif;background:var(--paper);color:var
   background:var(--paper);border:1.5px solid var(--vora);border-radius:11px;cursor:pointer;
   box-shadow:0 2px 8px rgba(0,0,0,.08);transition:box-shadow .2s}
 .menu-boto:hover{box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.marca-proves{display:inline-block;vertical-align:middle;margin-left:.5rem;padding:.15em .55em;border-radius:999px;background:#b3261e;color:#fff;font:600 .55em/1.6 Outfit,sans-serif;letter-spacing:.08em}
 .gestors-boto{position:fixed;top:1.1rem;right:1.1rem;z-index:60;width:46px;height:46px;
   display:flex;justify-content:center;align-items:center;
   background:var(--paper);border:1.5px solid var(--vora);border-radius:11px;cursor:pointer;
@@ -159,13 +160,13 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 
 .graella{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.3rem}
 .targeta{background:var(--paper);border:1px solid rgba(0,0,0,.04);border-radius:16px;overflow:hidden;
-  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;cursor:pointer;display:flex;flex-direction:column;height:437px;
+  transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;cursor:pointer;display:flex;flex-direction:column;height:472px;
   box-shadow:0 1px 2px rgba(0,0,0,.06), 0 6px 16px rgba(0,0,0,.10), 0 14px 30px rgba(0,0,0,.08)}
 .targeta:hover{transform:translateY(-6px);box-shadow:0 4px 8px rgba(0,0,0,.08), 0 14px 28px rgba(0,0,0,.16), 0 26px 50px rgba(0,0,0,.12)}
-.targeta .foto{flex:1;background:var(--fons);background-size:cover;background-position:center}
+.targeta .foto{flex:.85;background:var(--fons);background-size:cover;background-position:center}
 .targeta .cos{flex:1;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.35rem;overflow:hidden}
 .targeta .data{font-size:.8rem;font-weight:600;color:var(--c-musicals);text-transform:uppercase;letter-spacing:.03em}
-.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:600;font-size:1.3rem;line-height:1.15;
+.targeta h3{font-family:'Cormorant Garamond',serif;font-weight:700;font-size:1.45rem;line-height:1.15;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .targeta .detall{font-size:.84rem;color:var(--tinta);line-height:1.3;flex-shrink:0;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -173,7 +174,7 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 .targeta .detall .preu.gratis{color:#1a9e54;font-weight:700}
 .targeta .desc{flex:1;min-height:0;overflow:hidden;
   font-size:.95rem;color:var(--gris);line-height:1.4;font-family:'Cormorant Garamond',serif;
-  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4}
 .targeta .desc-buit{flex:1;min-height:0}
 .targeta .lloc{font-size:.86rem;color:var(--gris);flex-shrink:0;padding-top:.35rem}
 
@@ -190,7 +191,10 @@ body.carregant .filtres-bloquejables{opacity:.45;pointer-events:none;filter:gray
 </button>
 <div class="menu-rerefons" id="menu-rerefons"></div>
 <nav class="menu-panell" id="menu-panell" aria-label="Menú principal">
+  <!-- SATELLIT MUSICA: amagat al flip (beu de la publicada VELLA, que s'aprima);
+       restaurar descomentant quan es recablegi al mon nou.
   <a href="https://aiprovesxavi-collab.github.io/webagendacultural/musica/index.html">QFEM·MÚSICA</a>
+  -->
 </nav>
 
 <!-- accés al portal de gestors -->
@@ -404,6 +408,11 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
 const $ = s => document.querySelector(s);
 const ordreCatala = new Intl.Collator('ca');
 
+// TEXT PUBLIC de les categories: la clau interna es sobirana a dades i filtres,
+// pero el que veu la gent es tradueix aqui (una linia per canviar-ho dema)
+const ETIQUETA_CAT = { "Formació": "Tallers i cursos" };
+function etiquetaCategoria(nom){ return ETIQUETA_CAT[nom] || nom; }
+
 // ---- definicio visual de les 10 categories ----
 const CATS = [
   {catBD:"Arts escèniques", etiqueta:"Teatre", sub:"teatre · circ · màgia · titelles · monòlegs", color:"var(--c-esceniques)", img:"imatges/esceniques.jpg"},
@@ -414,7 +423,7 @@ const CATS = [
   {catBD:"Literatura",      etiqueta:"Literatura",    sub:"poesia · recitals · presentacions · contacontes", color:"var(--c-literatura)", img:"imatges/literatura.jpg"},
   {catBD:"Conferències",    etiqueta:"Conferències",  sub:"conferències · taules rodones · xerrades · simposis", color:"var(--c-conferencies)", img:"imatges/conferencies.jpg"},
   {catBD:"Cinema",          etiqueta:"Cinema",          sub:"pel·lícules a la fresca · cicles temàtics", color:"var(--c-cinema)", img:"imatges/cinema.jpg"},
-  {catBD:"Formació",        etiqueta:"Formació",        sub:"cursos · seminaris · tallers", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
+  {catBD:"Formació",        etiqueta:"Tallers i cursos", sub:"tallers · cursos · seminaris", color:"var(--c-formacio)", img:"imatges/formacio.jpg"},
   {catBD:"Museus",          etiqueta:"Museus",          sub:"museus · col·leccions · centres d'interpretació", color:"var(--c-museus)", img:"imatges/museus.jpg"},
   {catBD:"Altres",          etiqueta:"Altres",          sub:"", color:"var(--c-altres)", img:"imatges/altres.jpg"},
 ];
@@ -474,14 +483,49 @@ async function carregaFiltres(){
 // ---- utilitats ----
 // text de data d'un acte: si és permanent (museu), indicació curta; si no, la data normal.
 // L'horari complet del museu es mostra a la fitxa de detall de l'acte.
+// data_text es per a TEXT HUMA ("Del 4 al 6 de setembre..."); si porta una
+// data de maquina (ISO), s'ignora i la formatem nosaltres.
+function dataTextHuma(t){
+  if(!t) return null;
+  const s = String(t).trim();
+  return /^\d{4}-\d{2}-\d{2}([ T]\d{2}:\d{2}(:\d{2})?)?$/.test(s) ? null : t;
+}
+// artistes de vegades arriben amb disfressa de maquina: {"A","B"} -> A · B
+function netejaArtistes(t){
+  if(!t) return t;
+  const s = String(t).trim();
+  if(!s.startsWith("{") || !s.endsWith("}")) return t;
+  let parts = s.slice(1, -1).split('","');
+  if(parts.length === 1) parts = parts[0].split(",");
+  return parts.map(x=>x.replace(/^"+|"+$/g, "").trim()).filter(Boolean).join(" · ");
+}
 function textDataActe(a){
-  if(a.es_permanent === true) return "Permanent";
-  return a.data_text || fmtDataHora(a.data_inici, a.horari_text);
+  if(a.tipus_temporal === "permanent") return "Permanent";
+  // MODEL DE BLOCS: el pare funcio es data per la seva PROPERA funcio (calculada al filtrar)
+  if(a.es_bloc === "funcio" && a._propera){
+    const n = (a._fills||[]).length;
+    return fmtDataHora(a._propera.data_inici, null) + (n>1 ? ` · ${n} funcions` : "");
+  }
+  return dataTextHuma(a.data_text) || fmtDataHora(a.data_inici, a.horari_text);
+}
+// dia (YYYY-MM-DD) i hora (HH:MM) d'un timestamp, SEMPRE en hora de Catalunya
+function diaLocal(s){
+  if(!s) return "";
+  const x = new Date(s);
+  if(isNaN(x)) return String(s).slice(0,10);
+  return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Madrid',year:'numeric',month:'2-digit',day:'2-digit'}).format(x);
+}
+function horaDeData(s){
+  if(!s) return "";
+  const x = new Date(s);
+  if(isNaN(x)) return "";
+  const h = new Intl.DateTimeFormat('ca-ES',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(x);
+  return (h === "00:00") ? "" : h;   // 00:00 = "sense hora" (xarxa de seguretat del Salt 3)
 }
 function fmtData(d){
   if(!d) return "Data per confirmar";
   const x=new Date(d);
-  return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long'});
+  return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Madrid'});
 }
 function fmtHora(horari){
   if(!horari) return "";
@@ -494,15 +538,22 @@ function fmtHora(horari){
 }
 function fmtDataHora(d, horari){
   const data = fmtData(d);
-  const hora = fmtHora(horari);
+  const hora = horaDeData(d) || fmtHora(horari);   // l'hora viu dins del timestamp (fills) o al text (vell)
   return hora ? `${data} · ${hora}` : data;
 }
 // nom municipi a partir del camp text de actes_publicada
 function nomMunicipi(a){ return a.municipi || ""; }
 // categories de l'acte (camp jsonb "categories")
+// MODEL DE BLOCS: categoria principal + secundaries (parelles {categoria, subcategoria})
+function parellesCat(a){
+  const p=[];
+  if(a.categoria_principal) p.push({categoria:a.categoria_principal, subcategoria:a.subcategoria_principal||null});
+  (a.categories_secundaries||[]).forEach(x=>{ if(x && x.categoria) p.push(x); });
+  return p;
+}
 function categoriesActe(a){
   const c=new Set();
-  (a.categories||[]).forEach(x=>{ if(x && x.categoria) c.add(x.categoria); });
+  parellesCat(a).forEach(x=>c.add(x.categoria));
   return [...c];
 }
 // preu net: "Gratuït" si ho és, si no el text del preu (o null si no se sap)
@@ -516,14 +567,14 @@ function preuActe(a){
 // informació complementària per a la targeta, en cascada segons què hi hagi:
 // 1) artistes (+ preu)  2) categoria  3) públic destinatari  4) tros de descripció
 function detallActe(a){
-  const artistes=(a.artistes||"").toString().trim();
+  const artistes=netejaArtistes((a.artistes||"").toString().trim());
   const preu=preuActe(a);
   if(artistes){
     return {txt: artistes, extra: preu};
   }
   const cats=categoriesActe(a);
   if(cats.length){
-    return {txt: cats.join(" · "), extra: preu};
+    return {txt: cats.map(etiquetaCategoria).join(" · "), extra: preu};
   }
   const pub=(a.public_desti||"").toString().trim();
   if(pub){
@@ -539,7 +590,7 @@ function detallActe(a){
 // subcategoria -> categoria -> altres
 function imatgeReserva(a){
   const subImg = window._subImg || {};
-  for(const p of (a.categories||[])){
+  for(const p of parellesCat(a)){
     if(p && p.categoria && p.subcategoria){
       const fitxer = subImg[p.categoria + "|" + p.subcategoria];
       if(fitxer) return "categoria/" + fitxer;
@@ -552,8 +603,27 @@ function imatgeReserva(a){
 // imatge PRÒPIA de l'acte (pot ser externa i fallar), o null
 function imatgePropia(a){ return a.imatge || null; }
 
+// per a les TARGETES, la foto de Places es demana a mida de targeta:
+// molt mes rapida (i mes lleugera per a tothom) que la de 1200px,
+// que queda reservada per a la fitxa de l'acte.
+function imatgePropiaTargeta(a){
+  const u = imatgePropia(a);
+  return u ? u.replace(/maxWidthPx=\d+/, "maxWidthPx=400") : null;
+}
+
 // compatibilitat: imatge inicial a mostrar = sempre la de reserva
 function imatgeActe(a){ return imatgeReserva(a); }
+
+// fons EN CAPES per a la targeta: si la imatge de subcategoria no existeix
+// (404), la capa de categoria es veu sola; i si tampoc, la d'"altres".
+function fonsReserva(a){
+  const capes = [imatgeReserva(a)];
+  const cats = categoriesActe(a);
+  const catImg = (cats.length && imgCat[cats[0]]) || "imatges/altres.jpg";
+  if(catImg && capes[0] !== catImg) capes.push(catImg);
+  if(capes[capes.length-1] !== "imatges/altres.jpg") capes.push("imatges/altres.jpg");
+  return capes.map(u=>`url('${u}')`).join(",");
+}
 
 // intenta carregar la imatge pròpia (externa) amb límit de temps;
 // si carrega bé dins el termini, posa-la com a fons de l'element;
@@ -575,7 +645,7 @@ let mapa, capaMarcadors;
 // Tots els actes futurs es baixen UN COP a window._totsActes.
 // Després, filtrar és instantani (en local), i només es repinta la visualització.
 
-const CAMPS_LLISTA = "id,nom,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categories,imatge,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud,tipus_temporal,es_contenidor,es_permanent";
+const CAMPS_LLISTA = "id,nom,es_bloc,tanda,pare_publicat_id,id_pare,tipus_temporal,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categoria_principal,subcategoria_principal,categories_secundaries,imatge,lloc_id,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
 
 // baixa tots els actes futurs per lots, omplint la barra de progrés
 async function carregaTotsElsActes(){
@@ -606,15 +676,22 @@ async function carregaTotsElsActes(){
     }
   }, 120);
 
+  // TANDA ACTIVA: la publicacio del model de blocs es una projeccio per tandes;
+  // la web llegeix sempre l'ultima (max(tanda)), mai una tanda a mig fer.
+  const rT = await sb.from("actes_publicada_proves").select("tanda").order("tanda",{ascending:false}).limit(1);
+  const TANDA = (rT.data && rT.data[0]) ? rT.data[0].tanda : -1;
+  window._tanda = TANDA;
+
   let totes = [];
   let desdeFila = 0;
   const MIDA = 1000;
   let pintatPrimer = false;
 
   while(true){
-    const {data, error} = await sb.from("actes_publicada")
+    const {data, error} = await sb.from("actes_publicada_proves")
       .select(CAMPS_LLISTA)
-      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`)
+      .eq("tanda", TANDA)
+      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`)
       .order("data_inici",{ascending:true})
       .range(desdeFila, desdeFila + MIDA - 1);
     if(error){ $("#estat-llista").textContent="Error carregant les dades: "+error.message; break; }
@@ -623,7 +700,7 @@ async function carregaTotsElsActes(){
 
     // pinta el PRIMER lot de seguida (sense activar filtres)
     if(!pintatPrimer){
-      pintaLlista(data, false);
+      pintaLlista(data.filter(r=>!r.pare_publicat_id), false);
       pintatPrimer = true;
       $("#compte").textContent = totes.length;
       $("#et-res").textContent = "actes…";
@@ -637,6 +714,20 @@ async function carregaTotsElsActes(){
   // dades llestes: atura la fantasma i completa fins al 100%
   fantasmaActiu = false;
   clearInterval(fantasma);
+  // MODEL DE BLOCS: els FILLS de l'expansio (pare_publicat_id) no pinten targeta propia:
+  // filtren i callen. Qui surt es la targeta del PARE (funcio), datada per la propera funcio.
+  const fillsPerPare = new Map();
+  const targetes = [];
+  totes.forEach(r=>{
+    if(r.pare_publicat_id){
+      if(!fillsPerPare.has(r.pare_publicat_id)) fillsPerPare.set(r.pare_publicat_id, []);
+      fillsPerPare.get(r.pare_publicat_id).push(r);
+    } else targetes.push(r);
+  });
+  fillsPerPare.forEach(l=>l.sort((x,y)=>(x.data_inici||"").localeCompare(y.data_inici||"")));
+  targetes.forEach(t=>{ if(t.es_bloc==="funcio") t._fills = fillsPerPare.get(t.id) || []; });
+  window._fillsCarregats = totes.length - targetes.length;
+  totes = targetes;
   window._totsActes = totes;
   mostraPct(100);
   // amaga la barra i DESBLOQUEJA els filtres
@@ -657,6 +748,13 @@ function minutsHora(text){
   const min = m[2] ? parseInt(m[2],10) : 0;
   if(isNaN(h) || h>23 || min>59) return 9999;
   return h*60 + min;
+}
+
+// minuts d'un acte: primer l'hora del timestamp (fills del model de blocs), si no la del text
+function minutsActe(a){
+  const h = horaDeData(a.data_inici);
+  if(h){ const [hh,mm] = h.split(":").map(n=>parseInt(n,10)); return hh*60+mm; }
+  return minutsHora(a.horari_text);
 }
 
 // === FILTRATGE EN LOCAL (instantani) ===
@@ -680,7 +778,9 @@ function aplicaFiltres(){
   const cats = [...seleccionades];
   if(cats.length){
     res = res.filter(a=>{
-      const seves = (a.categories||[]).map(x=>x && x.categoria).filter(Boolean);
+      // DOCTRINA DEL MODEL: el filtre nomes mira la categoria PRINCIPAL;
+      // les secundaries son "nomes mostrar" (vesteixen la targeta, no filtren)
+      const seves = a.categoria_principal ? [a.categoria_principal] : [];
       return cats.some(c=>seves.includes(c));
     });
   }
@@ -703,12 +803,32 @@ function aplicaFiltres(){
   const fins = $("#f-fins").value;
   if(desde || fins){
     res = res.filter(a=>{
-      const ini = (a.data_inici||"").slice(0,10);
+      if(a.tipus_temporal === "permanent") return true;   // els permanents hi son sempre
+      if(a.es_bloc === "funcio" && a._fills && a._fills.length){
+        // ELS FILLS FILTREN: el pare surt si alguna funcio cau dins del periode
+        return a._fills.some(f=>{ const d = diaLocal(f.data_inici); return (!fins || d <= fins) && (!desde || d >= desde); });
+      }
+      const ini = diaLocal(a.data_inici);
       if(!ini) return false;
-      const fi = (a.data_fi||"").slice(0,10) || ini;   // si no té fi, és puntual
+      const fi = diaLocal(a.data_fi) || ini;   // si no té fi, és puntual
       if(fins && ini > fins) return false;   // comença després del període
       if(desde && fi < desde) return false;  // ja s'havia acabat abans del període
       return true;
+    });
+  }
+
+  // PROPERA FUNCIO de cada pare funcio: la primera que cau dins del periode i encara no ha passat
+  {
+    const ara = new Date();
+    res.forEach(a=>{
+      if(a.es_bloc !== "funcio" || !a._fills) return;
+      const dins = a._fills.filter(f=>{
+        const d = diaLocal(f.data_inici);
+        if(desde && d < desde) return false;
+        if(fins && d > fins) return false;
+        return new Date(f.data_inici) >= ara;
+      });
+      a._propera = dins[0] || a._fills.find(f=>new Date(f.data_inici) >= ara) || a._fills[a._fills.length-1] || null;
     });
   }
 
@@ -719,10 +839,12 @@ function aplicaFiltres(){
   {
     const ara = new Date();
     res = res.filter(a=>{
-      const ini = (a.data_inici||"").slice(0,10);
+      if(a.tipus_temporal === "permanent") return true;
+      if(a.es_bloc === "funcio") return (a._fills||[]).some(f=>new Date(f.data_inici) >= ara);  // li queda alguna funcio
+      const ini = diaLocal(a.data_inici);
       if(!ini) return true;
-      const fi = (a.data_fi||"").slice(0,10) || ini;
-      const min = minutsHora(a.horari_text);
+      const fi = diaLocal(a.data_fi) || ini;
+      const min = minutsActe(a);
       const esPuntual = (fi === ini) && (min !== 9999);  // un sol dia + hora concreta
       if(!esPuntual) return true;                        // multi-dia o sense hora: no es toca
       // construeix el moment d'inici (data + hora) i compara amb ara
@@ -742,15 +864,13 @@ function aplicaFiltres(){
   // Si NO hi ha filtre de categoria, o n'hi ha MÉS D'UNA -> ordre general:
   //   puntual -> rang curt -> contenidor -> permanent.
 
-  // subcategories que marquen un acte com a PERMANENT (durada llunyana)
-  // permanent = subtipus de RANG marcat explícitament (es_permanent=true), que
-  // NOMÉS posa projecta_permanents als museus institucionals. Així un acte que
-  // passa DINS d'un museu (que Gemini pot etiquetar com "Museus") NO es confon
-  // amb el museu permanent: no té es_permanent, és puntual o rang normal.
-  function esPermanent(a){ return a.es_permanent === true; }
-  function esContenidor(a){ return a.es_contenidor === true; }
-  function esRang(a){ return a.tipus_temporal === "rang"; }
-  function esPuntual(a){ return a.tipus_temporal === "puntual" || a.tipus_temporal === "multipuntual"; }
+  // MODEL DE BLOCS: permanent = tipus_temporal (museus projectats de llocs, mai confosos amb
+  // actes dins d'un museu); contenidor = pare de cicle; el pare funcio es tracta com a
+  // PUNTUAL (ordenat per la propera funcio), no com a rang.
+  function esPermanent(a){ return a.tipus_temporal === "permanent"; }
+  function esContenidor(a){ return a.es_bloc === "festival_cicle"; }
+  function esRang(a){ return a.tipus_temporal === "rang" && a.es_bloc !== "funcio"; }
+  function esPuntual(a){ return a.tipus_temporal === "puntual" || a.es_bloc === "funcio"; }
 
   // ordre de prioritat dels 4 grups segons el "mode" (quin tipus és el característic)
   // grups: P=puntual, R=rang curt, C=contenidor, M=permanent
@@ -788,7 +908,9 @@ function aplicaFiltres(){
   }
   const rangTipus = fesRangTipus(mode);
 
-  const soloData = s => (s||"").slice(0,10);
+  const soloData = diaLocal;
+  const dataOrd = a => (a.es_bloc==="funcio" && a._propera) ? a._propera.data_inici : a.data_inici;
+  const minutsOrd = a => (a.es_bloc==="funcio" && a._propera) ? minutsActe(a._propera) : minutsActe(a);
 
   res.sort((a,b)=>{
     const ra = rangTipus(a), rb = rangTipus(b);
@@ -818,9 +940,9 @@ function aplicaFiltres(){
       return (a.nom||"").localeCompare(b.nom||"","ca");
     }
     // PUNTUALS/MULTIPUNTUALS: per data d'inici (avui primer), després hora
-    const da = soloData(a.data_inici), db = soloData(b.data_inici);
+    const da = soloData(dataOrd(a)), db = soloData(dataOrd(b));
     if(da !== db) return da < db ? -1 : 1;
-    return minutsHora(a.horari_text) - minutsHora(b.horari_text);
+    return minutsOrd(a) - minutsOrd(b);
   });
 
   // "format titol" = el nom TE minuscules (no esta tot en majuscules com l'original de Socrata)
@@ -881,7 +1003,7 @@ function pintaLlista(actes, afegir=false){
     const desc=(a.descripcio_net||"").toString().trim();
     const descHtml = (desc && desc!==d.txt) ? `<div class="desc">${desc}</div>` : `<div class="desc-buit"></div>`;
     t.innerHTML=`
-      <div class="foto" style="background-image:url('${imatgeActe(a)}')"></div>
+      <div class="foto" style="background-image:${fonsReserva(a)}"></div>
       <div class="cos">
         <div class="data">${textDataActe(a)}</div>
         <h3>${a.nom||"Acte sense títol"}</h3>
@@ -893,7 +1015,7 @@ function pintaLlista(actes, afegir=false){
     g.appendChild(t);
     // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
     const elFoto = t.querySelector(".foto");
-    provaImatgePropia(elFoto, imatgePropia(a), 4000);
+    provaImatgePropia(elFoto, imatgePropiaTargeta(a), 10000);
   });
 }
 
@@ -1151,10 +1273,11 @@ async function activaGeo(){
       const meu = propers[0];
       // comptar quants actes futurs té el meu municipi (per saber si cal oferir-ne un de proper)
       const avui = new Date().toISOString().slice(0,10);
-      const {count} = await sb.from("actes_publicada")
+      const {count} = await sb.from("actes_publicada_proves")
         .select("id",{count:"exact",head:true})
+        .eq("tanda", window._tanda)
         .eq("municipi_id", meu.id)
-        .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
+        .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`);
 
       // botó del meu municipi: estil gran, NOMÉS el nom (sense número)
       // surt ja MARCAT (actiu), perquè qui clica "a prop meu" ja vol el seu poble filtrat
@@ -1192,10 +1315,11 @@ async function primerMunicipiAmbActes(propers, avui, exclouId){
   // mirem els 15 més propers per no fer massa consultes
   for(const m of propers.slice(0,15)){
     if(m.id===exclouId) continue;
-    const {count} = await sb.from("actes_publicada")
+    const {count} = await sb.from("actes_publicada_proves")
       .select("id",{count:"exact",head:true})
+      .eq("tanda", window._tanda)
       .eq("municipi_id", m.id)
-      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui})`);
+      .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`);
     if(count){ return {...m, count}; }
   }
   return null;
