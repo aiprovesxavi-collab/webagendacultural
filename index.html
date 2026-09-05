@@ -613,6 +613,18 @@ function imatgeActe(a){ return imatgeReserva(a); }
 
 // fons EN CAPES per a la targeta: si la imatge de subcategoria no existeix
 // (404), la capa de categoria es veu sola; i si tampoc, la d'"altres".
+const _obsFoto = new IntersectionObserver(entrades=>{
+  entrades.forEach(e=>{
+    if(!e.isIntersecting) return;
+    _obsFoto.unobserve(e.target);
+    provaImatgePropia(e.target, e.target._urlPropia, 6000);
+  });
+}, {rootMargin: "300px"});
+function _lazyFoto(el, url){
+  if(!url) return;
+  el._urlPropia = url;
+  _obsFoto.observe(el);
+}
 function fonsReserva(a){
   const capes = [imatgeReserva(a)];
   const cats = categoriesActe(a);
@@ -1007,7 +1019,7 @@ function pintaLlista(actes, afegir=false){
     g.appendChild(t);
     // xarxa de seguretat: intenta la imatge pròpia (externa); si falla/triga, queda la de reserva
     const elFoto = t.querySelector(".foto");
-    provaImatgePropia(elFoto, imatgePropiaTargeta(a), 10000);
+    _lazyFoto(elFoto, imatgePropiaTargeta(a));   // nomes quan entra a pantalla
   });
 }
 
