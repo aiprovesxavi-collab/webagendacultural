@@ -688,6 +688,7 @@ async function carregaTotsElsActes(){
     const {data, error} = await sb.from("actes_publicada_proves")
       .select(CAMPS_LLISTA)
       .eq("tanda", TANDA)
+      .is("pare_publicat_id", null)
       .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`)
       .order("data_inici",{ascending:true})
       .range(desdeFila, desdeFila + MIDA - 1);
@@ -711,20 +712,14 @@ async function carregaTotsElsActes(){
   // dades llestes: atura la fantasma i completa fins al 100%
   fantasmaActiu = false;
   clearInterval(fantasma);
-  // MODEL DE BLOCS: els FILLS de l'expansio (pare_publicat_id) no pinten targeta propia:
-  // filtren i callen. Qui surt es la targeta del PARE (funcio), datada per la propera funcio.
-  const fillsPerPare = new Map();
-  const targetes = [];
-  totes.forEach(r=>{
-    if(r.pare_publicat_id){
-      if(!fillsPerPare.has(r.pare_publicat_id)) fillsPerPare.set(r.pare_publicat_id, []);
-      fillsPerPare.get(r.pare_publicat_id).push(r);
-    } else targetes.push(r);
+  // MODEL DE BLOCS: el pare funcio porta les seves FUNCIONS al jsonb;
+  // el filtratge beu d'aqui — zero peticions extra pels fills
+  totes.forEach(tg=>{
+    if(tg.es_bloc === "funcio" && Array.isArray(tg.funcions)){
+      tg._fills = tg.funcions.filter(f=>f && f.data)
+        .map(f=>({data_inici: f.data + "T" + (f.hora || "00:00") + ":00"}));
+    }
   });
-  fillsPerPare.forEach(l=>l.sort((x,y)=>(x.data_inici||"").localeCompare(y.data_inici||"")));
-  targetes.forEach(t=>{ if(t.es_bloc==="funcio") t._fills = fillsPerPare.get(t.id) || []; });
-  window._fillsCarregats = totes.length - targetes.length;
-  totes = targetes;
   window._totsActes = totes;
   mostraPct(100);
   // amaga la barra i DESBLOQUEJA els filtres
