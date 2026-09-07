@@ -687,7 +687,7 @@ let mapa, capaMarcadors;
 const CAMPS_LLISTA = "id,nom,es_bloc,tanda,pare_publicat_id,id_pare,tipus_temporal,data_inici,data_fi,data_text,horari_text,descripcio_net,artistes,categoria_principal,subcategoria_principal,categories_secundaries,imatge,lloc_id,lloc_nom,municipi,municipi_id,preu,preu_gratuit,public_desti,latitud,longitud";
 
 // baixa tots els actes futurs per lots, omplint la barra de progrés
-async function carregaTotsElsActes(){
+async function carregaTotsElsActes(esperaAbansDePintar){
   const avui = new Date().toISOString().slice(0,10);
   const omple = $("#bc-omple");
   const pct = $("#bc-pct");
@@ -716,16 +716,12 @@ async function carregaTotsElsActes(){
   }, 120);
 
   // TANDA ACTIVA: la publicacio del model de blocs es una projeccio per tandes;
-  // la web llegeix sempre l'ultima (max(tanda)), mai una tanda a mig fer.
-  const rT = await sb.from("actes_publicada_proves").select("tanda").order("tanda",{ascending:false}).limit(1);
-  const TANDA = (rT.data && rT.data[0]) ? rT.data[0].tanda : -1;
-  window._tanda = TANDA;
-
+  // la vista actes_publicada_activa ja porta max(tanda) incorporat: un viatge menys
+  // (abans: consulta de la tanda + lots, en serie; cada viatge paga la latencia del dia).
   let totes = [];
   const MIDA = 1000;
-  const consulta = desDe => sb.from("actes_publicada_proves")
+  const consulta = desDe => sb.from("actes_publicada_activa")
     .select(CAMPS_LLISTA, desDe === 0 ? {count: "exact"} : undefined)
-    .eq("tanda", TANDA)
     .is("pare_publicat_id", null)
     .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`)
     .order("id", {ascending: true})
@@ -733,6 +729,8 @@ async function carregaTotsElsActes(){
   const primer = await consulta(0);
   if(primer.error) console.error(primer.error);
   totes = primer.data || [];
+  window._tanda = totes.length ? totes[0].tanda : -1;
+  if(esperaAbansDePintar) await esperaAbansDePintar;   // els catalegs (imatges de reserva) abans del primer pintat
   pintaLlista(totes, false);
   const totalFiles = primer.count || totes.length;
   if(totalFiles > MIDA){
@@ -1295,9 +1293,8 @@ async function activaGeo(){
       const meu = propers[0];
       // comptar quants actes futurs té el meu municipi (per saber si cal oferir-ne un de proper)
       const avui = new Date().toISOString().slice(0,10);
-      const {count} = await sb.from("actes_publicada_proves")
+      const {count} = await sb.from("actes_publicada_activa")
         .select("id",{count:"exact",head:true})
-        .eq("tanda", window._tanda)
         .eq("municipi_id", meu.id)
         .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`);
 
@@ -1337,9 +1334,8 @@ async function primerMunicipiAmbActes(propers, avui, exclouId){
   // mirem els 15 més propers per no fer massa consultes
   for(const m of propers.slice(0,15)){
     if(m.id===exclouId) continue;
-    const {count} = await sb.from("actes_publicada_proves")
+    const {count} = await sb.from("actes_publicada_activa")
       .select("id",{count:"exact",head:true})
-      .eq("tanda", window._tanda)
       .eq("municipi_id", m.id)
       .or(`data_fi.gte.${avui},and(data_fi.is.null,data_inici.gte.${avui}),tipus_temporal.eq.permanent`);
     if(count){ return {...m, count}; }
@@ -1451,8 +1447,11 @@ function restauraFiltres(){
 (async()=>{
   document.body.classList.add("carregant");   // filtres bloquejats des del primer instant
   pintaCategories();
-  await carregaFiltres();        // municipis, comarques, subcategories (per al mapa i imatges)
-  await carregaTotsElsActes();   // baixa TOTS els actes un cop (amb barra de progrés)
+  // catalegs i actes EN PARAL·LEL: el primer lot surt a l'instant; el primer pintat
+  // espera els catalegs (imatges de reserva per subcategoria) per no mostrar targetes nues
+  const pCatalegs = carregaFiltres();      // municipis, comarques, subcategories (per al mapa i imatges)
+  await carregaTotsElsActes(pCatalegs);    // baixa TOTS els actes un cop (amb barra de progrés)
+  await pCatalegs;
   restauraFiltres();             // recupera els filtres si tornem d'un acte
   aplicaFiltres();               // primer pintat (amb els filtres restaurats, si n'hi ha)
 })();
