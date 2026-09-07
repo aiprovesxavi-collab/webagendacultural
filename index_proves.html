@@ -481,8 +481,8 @@ async function carregaFiltres(){
 // ---- utilitats ----
 // text de data d'un acte: si és permanent (museu), indicació curta; si no, la data normal.
 // L'horari complet del museu es mostra a la fitxa de detall de l'acte.
-// data_text es per a TEXT HUMA ("Del 4 al 6 de setembre..."); si porta una
-// data de maquina (ISO), s'ignora i la formatem nosaltres.
+// data_text (text huma de la font) JA NO es pinta a la targeta: veu unica de les dates
+// (sentencia 7 set 2026). Es mostra nomes a la fitxa. La funcio queda per si cal.
 function dataTextHuma(t){
   if(!t) return null;
   const s = String(t).trim();
@@ -497,6 +497,38 @@ function netejaArtistes(t){
   if(parts.length === 1) parts = parts[0].split(",");
   return parts.map(x=>x.replace(/^"+|"+$/g, "").trim()).filter(Boolean).join(" · ");
 }
+// ===== VEU UNICA DE LES DATES (sentencia 7 set 2026, opcio A) =====
+// La targeta IGNORA data_text (que baixa a la fitxa) i pinta sempre a partir de
+// data_inici / data_fi, en hora de Catalunya. Any nomes si no es l'actual.
+const _MESOS = ["gener","febrer","març","abril","maig","juny","juliol","agost","setembre","octubre","novembre","desembre"];
+function _partsDia(ymd){ const p = ymd.split("-").map(Number); return {a:p[0], m:p[1], d:p[2]}; }
+function _deMes(m){ const n = _MESOS[m-1]; return (/^[aeiouh]/.test(n) ? "d'" : "de ") + n; }
+// "5 de setembre" / "5 de setembre de 2027"
+function _diaMesAny(p, ambAny){ return `${p.d} ${_deMes(p.m)}` + (ambAny ? ` de ${p.a}` : ""); }
+// apostrofs catalans davant de dia: "de l'1", "a l'11"
+function _del(p, ambAny){ return ((p.d===1||p.d===11) ? "de l'" : "del ") + _diaMesAny(p, ambAny); }
+function _al(p, ambAny){  return ((p.d===1||p.d===11) ? "a l'"  : "al ")  + _diaMesAny(p, ambAny); }
+function _delDia(p){ return ((p.d===1||p.d===11) ? "de l'" : "del ") + p.d; }
+// rang: "del 5 al 7 de setembre" · "del 28 de setembre al 4 d'octubre" · "fins al 4 d'octubre" si ja ha comencat
+function textRang(dIni, dFi){
+  const avui = diaLocal(new Date());
+  const anyAvui = Number(avui.slice(0,4));
+  const i = _partsDia(dIni), f = _partsDia(dFi);
+  const anyFi = f.a !== anyAvui;
+  if(dIni < avui) return "fins " + _al(f, anyFi);
+  if(i.a === f.a && i.m === f.m) return `${_delDia(i)} ${_al(f, anyFi)}`;
+  return `${_del(i, i.a !== anyAvui)} ${_al(f, anyFi)}`;
+}
+// "dissabte, 5 de setembre" (+ " de 2027" si l'any no es l'actual), en hora de Catalunya
+function fmtData(d){
+  if(!d) return "Data per confirmar";
+  const x = new Date(d);
+  if(isNaN(x)) return String(d);
+  const p = _partsDia(diaLocal(d));
+  const setm = new Intl.DateTimeFormat('ca-ES',{weekday:'long',timeZone:'Europe/Madrid'}).format(x);
+  const anyAvui = Number(diaLocal(new Date()).slice(0,4));
+  return `${setm}, ${_diaMesAny(p, p.a !== anyAvui)}`;
+}
 function textDataActe(a){
   if(a.tipus_temporal === "permanent") return "Permanent";
   // MODEL DE BLOCS: el pare funcio es data per la seva PROPERA funcio (calculada al filtrar)
@@ -504,7 +536,9 @@ function textDataActe(a){
     const n = (a._fills||[]).length;
     return fmtDataHora(a._propera.data_inici, null) + (n>1 ? ` · ${n} funcions` : "");
   }
-  return dataTextHuma(a.data_text) || fmtDataHora(a.data_inici, a.horari_text);
+  const dIni = diaLocal(a.data_inici), dFi = diaLocal(a.data_fi);
+  if(dIni && dFi && dFi > dIni) return textRang(dIni, dFi);
+  return fmtDataHora(a.data_inici, a.horari_text);
 }
 // dia (YYYY-MM-DD) i hora (HH:MM) d'un timestamp, SEMPRE en hora de Catalunya
 function diaLocal(s){
@@ -519,11 +553,6 @@ function horaDeData(s){
   if(isNaN(x)) return "";
   const h = new Intl.DateTimeFormat('ca-ES',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(x);
   return (h === "00:00") ? "" : h;   // 00:00 = "sense hora" (xarxa de seguretat del Salt 3)
-}
-function fmtData(d){
-  if(!d) return "Data per confirmar";
-  const x=new Date(d);
-  return x.toLocaleDateString('ca-ES',{weekday:'long',day:'numeric',month:'long',timeZone:'Europe/Madrid'});
 }
 function fmtHora(horari){
   if(!horari) return "";
