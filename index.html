@@ -550,8 +550,11 @@ function horaDeData(s){
   if(!s) return "";
   const x = new Date(s);
   if(isNaN(x)) return "";
+  // 00:00 = "sense hora": tant si es mitjanit catalana com mitjanit UTC (font que guarda
+  // la data sense hora com a T00:00Z, que a Catalunya es veuria com a "02:00")
+  if(x.getUTCHours() === 0 && x.getUTCMinutes() === 0) return "";
   const h = new Intl.DateTimeFormat('ca-ES',{timeZone:'Europe/Madrid',hour:'2-digit',minute:'2-digit',hour12:false}).format(x);
-  return (h === "00:00") ? "" : h;   // 00:00 = "sense hora" (xarxa de seguretat del Salt 3)
+  return (h === "00:00") ? "" : h;
 }
 function fmtHora(horari){
   if(!horari) return "";
